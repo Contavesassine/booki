@@ -2,20 +2,18 @@ FROM freqtradeorg/freqtrade:stable
 
 WORKDIR /freqtrade
 
-# Copy files to the correct location
-COPY SimplePortfolio.py ./user_data/strategies/
-COPY config_template.json ./user_data/
-COPY start_bot.sh ./
+# Copy ALL files to the container
+COPY . .
 
-# Fix permissions and make executable
+# Fix permissions
 USER root
-RUN chmod +x start_bot.sh
-RUN mkdir -p user_data/logs user_data/data
-RUN chown -R ftuser:ftuser user_data/
+RUN chmod +x web_server.py
+RUN mkdir -p user_data/strategies user_data/logs user_data/data
+RUN chown -R ftuser:ftuser .
 
 # Switch back to ftuser
 USER ftuser
 
-# Override the default entrypoint
+# Start web server
 ENTRYPOINT []
-CMD ["./start_bot.sh"]
+CMD ["python", "web_server.py"]
