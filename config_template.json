@@ -1,16 +1,16 @@
 {
     "$schema": "https://schema.freqtrade.io/schema.json",
-    "max_open_trades": 2,
+    "max_open_trades": 4,
     "stake_currency": "USD",
-    "stake_amount": 8,
+    "stake_amount": 2,
     "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "USD",
     "dry_run": false,
     "cancel_open_orders_on_exit": false,
     "trading_mode": "spot",
     "unfilledtimeout": {
-        "entry": 60,
-        "exit": 60,
+        "entry": 30,
+        "exit": 30,
         "exit_timeout_count": 0,
         "unit": "minutes"
     },
@@ -50,12 +50,12 @@
     },
     "api_server": {
         "enabled": false,
-        "listen_ip_address": "127.0.0.1",
+        "listen_ip_address": "0.0.0.0",
         "listen_port": 8080,
         "username": "freqtrader",
         "password": "dummy_password"
     },
-    "bot_name": "SimplePortfolio",
+    "bot_name": "ProductionBot",
     "initial_state": "running",
     "force_entry_enable": false,
     "internals": {
