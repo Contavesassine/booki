@@ -1,15 +1,13 @@
 FROM freqtradeorg/freqtrade:stable
 
-# Copy our files
-COPY . /freqtrade/
+# Copy files
+COPY SimplePortfolio.py /freqtrade/user_data/strategies/
+COPY config_template.json /freqtrade/user_data/config_template.json
+COPY setup_and_run.sh /freqtrade/
+
+# Make script executable
+RUN chmod +x setup_and_run.sh
+
 WORKDIR /freqtrade
 
-# Make start script executable
-RUN chmod +x start.py
-
-# Create directories
-RUN mkdir -p user_data/strategies user_data/logs user_data/data
-
-# Use python directly instead of the freqtrade entrypoint
-ENTRYPOINT []
-CMD ["python", "start.py"]
+CMD ["./setup_and_run.sh"]
