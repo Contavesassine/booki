@@ -1,41 +1,23 @@
-FROM python:3.11-slim
+FROM freqtradeorg/freqtrade:stable
 
-WORKDIR /app
+# Switch to root to install packages
+USER root
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    wget \
-    curl \
-    gcc \
-    g++ \
-    make \
-    libffi-dev \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Copy our files
+COPY . /freqtrade/
+WORKDIR /freqtrade
 
-# Install TA-Lib from source (more reliable)
-RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
-    tar -xzf ta-lib-0.4.0-src.tar.gz && \
-    cd ta-lib/ && \
-    ./configure --prefix=/usr && \
-    make && \
-    make install && \
-    cd .. && \
-    rm -rf ta-lib ta-lib-0.4.0-src.tar.gz
+# Install any additional requirements
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Upgrade pip first
-RUN pip install --upgrade pip setuptools wheel
-
-# Copy and install requirements
-COPY requirements.txt .
-RUN pip install --no-cache-dir --timeout=1000 -r requirements.txt
-
-# Copy application files
-COPY . .
+# Make start script executable
 RUN chmod +x start.py
 
-# Create necessary directories
+# Create directories
 RUN mkdir -p user_data/strategies user_data/logs user_data/data
 
+# Switch back to freqtrade user
+USER ftuser
+
+# Run our start script
 CMD ["python", "start.py"]
