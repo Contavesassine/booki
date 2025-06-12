@@ -2,8 +2,10 @@ FROM freqtradeorg/freqtrade:stable
 
 WORKDIR /freqtrade
 
-# Copy ALL files to the container
-COPY . .
+# Copy files to current directory (not user_data)
+COPY config_template.json ./
+COPY SimplePortfolio.py ./
+COPY web_server.py ./
 
 # Fix permissions
 USER root

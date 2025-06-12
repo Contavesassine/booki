@@ -18,9 +18,13 @@ class HealthHandler(BaseHTTPRequestHandler):
 
 def start_freqtrade():
     """Start freqtrade in background"""
-    time.sleep(5)  # Wait for web server to start
+    time.sleep(5)
     
     print("🚀 Starting Freqtrade...")
+    print(f"Working directory: {os.getcwd()}")
+    print("Files available:")
+    for f in os.listdir('.'):
+        print(f"  - {f}")
     
     # Get API keys
     api_key = os.getenv('KRAKEN_API_KEY')
@@ -30,8 +34,16 @@ def start_freqtrade():
         print("❌ Missing API keys!")
         return
     
+    print("✅ API keys found")
+    
+    # Find config file (it should be in current directory, not user_data)
+    config_file = 'config_template.json'
+    if not os.path.exists(config_file):
+        print(f"❌ {config_file} not found!")
+        return
+    
     # Load and update config
-    with open('user_data/config_template.json', 'r') as f:
+    with open(config_file, 'r') as f:
         config = json.load(f)
     
     config['exchange']['key'] = api_key
@@ -41,13 +53,20 @@ def start_freqtrade():
     os.makedirs('user_data/strategies', exist_ok=True)
     os.makedirs('user_data/logs', exist_ok=True)
     
-    # Save config
+    # Save runtime config
     with open('user_data/config.json', 'w') as f:
         json.dump(config, f, indent=2)
     
+    print("✅ Config created")
+    
     # Copy strategy
-    import shutil
-    shutil.copy('SimplePortfolio.py', 'user_data/strategies/')
+    if os.path.exists('SimplePortfolio.py'):
+        import shutil
+        shutil.copy('SimplePortfolio.py', 'user_data/strategies/')
+        print("✅ Strategy copied")
+    else:
+        print("❌ SimplePortfolio.py not found!")
+        return
     
     print("✅ Starting accumulation trading...")
     
@@ -60,6 +79,8 @@ def start_freqtrade():
     ])
 
 def main():
+    print("🌐 Starting Accumulator Bot Web Server...")
+    
     # Start freqtrade in background
     bot_thread = threading.Thread(target=start_freqtrade, daemon=True)
     bot_thread.start()
@@ -68,7 +89,7 @@ def main():
     port = int(os.getenv('PORT', 8080))
     server = HTTPServer(('0.0.0.0', port), HealthHandler)
     
-    print(f"🌐 Web server starting on port {port}")
+    print(f"🌐 Web server ready on port {port}")
     server.serve_forever()
 
 if __name__ == "__main__":
