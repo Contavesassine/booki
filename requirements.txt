@@ -1,0 +1,7 @@
+freqtrade[full]
+ccxt>=4.0.0
+pandas
+numpy
+talib-binary
+requests
+python-telegram-bot

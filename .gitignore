@@ -1,0 +1,10 @@
+.env
+*.sqlite
+*.db
+user_data/logs/
+user_data/data/
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+*.tmp
