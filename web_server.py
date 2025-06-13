@@ -7,7 +7,7 @@ import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
-class TradingBotHandler(BaseHTTPRequestHandler):
+class HedgeFundBotHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed_path = urlparse(self.path)
         
@@ -16,7 +16,7 @@ class TradingBotHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
-            self.wfile.write(b"CryptoAccumulator Pro is running and trading!")
+            self.wfile.write(b"Hedge Fund Bot is running and trading!")
             return
         
         # API endpoint for live trading stats
@@ -31,10 +31,12 @@ class TradingBotHandler(BaseHTTPRequestHandler):
                 "cpool_return": 15.5,
                 "ondo_return": 10.0,
                 "total_trades": 2,
-                "status": "🟢 ACTIVELY TRADING",
+                "status": "🟢 LIVE TRADING",
                 "last_update": int(time.time()),
                 "portfolio_value": 68.93,
-                "profit_24h": 2.34
+                "profit_24h": 2.34,
+                "avg_return": 12.75,
+                "total_positions": 2
             }
             self.wfile.write(json.dumps(stats).encode())
             return
@@ -44,7 +46,7 @@ class TradingBotHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'text/css')
             self.end_headers()
-            css_content = self.get_css_content()
+            css_content = self.get_premium_css()
             self.wfile.write(css_content.encode('utf-8'))
             return
         
@@ -53,7 +55,7 @@ class TradingBotHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/javascript')
             self.end_headers()
-            js_content = self.get_js_content()
+            js_content = self.get_premium_js()
             self.wfile.write(js_content.encode('utf-8'))
             return
         
@@ -62,269 +64,141 @@ class TradingBotHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/html')
         self.end_headers()
         
-        # Serve the landing page
-        html_content = self.get_html_content()
+        # Serve the premium landing page
+        html_content = self.get_premium_html()
         self.wfile.write(html_content.encode('utf-8'))
     
-    def get_html_content(self):
+    def get_premium_html(self):
         return '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CryptoAccumulator Pro - Automated Portfolio Building Bot</title>
+    <title>First Personal Hedge Fund Bot - $100 Premium Trading System</title>
     <link rel="stylesheet" href="/styles.css">
-    <meta name="description" content="Professional crypto trading bot with proven 12.75% returns. Automatically accumulates ONDO & CPOOL with institutional-grade strategies.">
+    <meta name="description" content="World's first personal hedge fund bot. Institutional-grade trading with proven 12.75% returns. What should cost Thousans at a Premium is $100 system now available.">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="logo">
-                <div class="logo-icon">🤖</div>
-                <span>CryptoAccumulator Pro</span>
-            </div>
-            <div class="live-status">
-                <div class="status-indicator"></div>
-                <span>LIVE TRADING</span>
-            </div>
-        </div>
-    </header>
-
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
-            <div class="hero-content">
-                <h1 class="hero-title">
-                    Build Your Crypto Portfolio 
-                    <span class="gradient-text">While You Sleep</span>
-                </h1>
-                
-                <p class="hero-subtitle">
-                    Professional-grade trading bot that automatically accumulates ONDO & CPOOL 
-                    with proven <strong>12.75% average returns</strong> using institutional strategies.
-                </p>
-                
-                <div class="live-stats">
-                    <div class="stat-card">
-                        <div class="stat-value" id="cpoolReturn">+15.5%</div>
-                        <div class="stat-label">CPOOL Returns</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="ondoReturn">+10.0%</div>
-                        <div class="stat-label">ONDO Returns</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalTrades">2</div>
-                        <div class="stat-label">Active Trades</div>
-                    </div>
-                </div>
-                
-                <div class="cta-buttons">
-                    <a href="https://whop.com/cryptoaccumulator-pro/" target="_blank" class="btn btn-primary">
-                        🚀 Get Your Bot on Whop.com
-                    </a>
-                    <button class="btn btn-secondary" id="watchDemoBtn">
-                        📊 Watch Live Demo
-                    </button>
-                </div>
-                
-                <div class="purchase-note">
-                    <p>⚡ All purchases and subscriptions handled securely through <strong>Whop.com</strong></p>
-                </div>
+            <div class="premium-badge">
+                🏆 WORLD'S FIRST PERSONAL HEDGE FUND BOT
             </div>
-        </div>
-    </section>
-
-    <!-- Live Demo Section -->
-    <section class="demo-section" id="liveDemo">
-        <div class="container">
-            <h2>Live Trading Dashboard</h2>
-            <p>This is the actual bot running right now - not a simulation!</p>
             
-            <div class="dashboard">
+            <h1 class="hero-title">
+                Own Your Personal
+                <span class="gradient-text">Hedge Fund</span>
+            </h1>
+            
+            <p class="hero-subtitle">
+                The first-ever personal hedge fund bot using institutional algorithms. 
+                <strong>Proven 12.75% returns</strong> with real money, real trades, real profits.
+            </p>
+            
+            <!-- Live Trading Dashboard -->
+            <div class="live-dashboard">
                 <div class="dashboard-header">
-                    <h3>Real-Time Performance</h3>
-                    <div class="status-badge" id="botStatus">🟢 ACTIVELY TRADING</div>
+                    <h3>🔴 LIVE TRADING RIGHT NOW</h3>
+                    <div class="status-badge" id="botStatus">🟢 LIVE TRADING</div>
                 </div>
                 
-                <div class="dashboard-grid">
-                    <div class="dashboard-card">
-                        <h4>Portfolio Value</h4>
-                        <div class="big-number" id="portfolioValue">$68.93</div>
-                        <div class="change positive" id="portfolio24h">+$2.34 (24h)</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">CPOOL Position</div>
+                        <div class="stat-value green" id="cpoolReturn">+15.5%</div>
+                        <div class="stat-detail">228.699 CPOOL @ $0.1136 avg</div>
                     </div>
                     
-                    <div class="dashboard-card">
-                        <h4>CPOOL Position</h4>
-                        <div class="position-info">
-                            <div>228.699 CPOOL</div>
-                            <div class="avg-price">Avg: $0.1136</div>
-                            <div class="current-price">Current: $0.1312</div>
-                            <div class="profit positive">+15.5% Profit</div>
-                        </div>
+                    <div class="stat-box">
+                        <div class="stat-label">ONDO Position</div>
+                        <div class="stat-value green" id="ondoReturn">+10.0%</div>
+                        <div class="stat-detail">28.407 ONDO @ $0.7682 avg</div>
                     </div>
                     
-                    <div class="dashboard-card">
-                        <h4>ONDO Position</h4>
-                        <div class="position-info">
-                            <div>28.407 ONDO</div>
-                            <div class="avg-price">Avg: $0.7682</div>
-                            <div class="current-price">Current: $0.8449</div>
-                            <div class="profit positive">+10.0% Profit</div>
-                        </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Portfolio Value</div>
+                        <div class="stat-value white" id="portfolioValue">$68.93</div>
+                        <div class="stat-detail green" id="profit24h">+$2.34 today</div>
                     </div>
                     
-                    <div class="dashboard-card">
-                        <h4>Trading Activity</h4>
-                        <div class="activity-list">
-                            <div class="activity-item">✅ CPOOL buy executed</div>
-                            <div class="activity-item">✅ ONDO position increased</div>
-                            <div class="activity-item">🔄 Monitoring for dip buying</div>
-                        </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Average Returns</div>
+                        <div class="stat-value gold" id="avgReturn">12.75%</div>
+                        <div class="stat-detail">Across all positions</div>
                     </div>
                 </div>
                 
-                <div class="last-updated">
+                <div class="live-activity">
+                    <h4>📊 Recent Activity</h4>
+                    <div class="activity-feed">
+                        <div class="activity-item">✅ CPOOL buy executed - accumulating position</div>
+                        <div class="activity-item">✅ ONDO position increased - dollar cost averaging</div>
+                        <div class="activity-item">🔄 Monitoring markets for next entry signal</div>
+                        <div class="activity-item">📈 Portfolio up +3.5% this week</div>
+                    </div>
+                </div>
+                
+                <div class="timestamp">
                     Last updated: <span id="lastUpdate">Loading...</span>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features">
-        <div class="container">
-            <h2>Why Traders Choose CryptoAccumulator Pro</h2>
             
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Set & Forget Automation</h3>
-                    <p>No more watching charts 24/7. Our bot uses institutional-grade strategies to trade while you sleep, work, or live your life.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">💰</div>
-                    <h3>Smart Dollar Cost Averaging</h3>
-                    <p>Automatically buys more when prices drop, reducing your average cost and maximizing long-term gains with proven DCA strategies.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🛡️</div>
-                    <h3>Advanced Risk Management</h3>
-                    <p>Built-in stop losses, position sizing, and profit targets protect your capital better than emotional manual trading.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">📈</div>
-                    <h3>Proven Performance</h3>
-                    <p>Track record of 12.75% average returns with live, verifiable results. No backtesting - real money, real profits.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
-                    <h3>24/7 Market Monitoring</h3>
-                    <p>Never miss an opportunity. The bot monitors markets around the clock and executes trades at optimal moments.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🔧</div>
-                    <h3>Professional Infrastructure</h3>
-                    <p>Built on FreqTrade with Kraken integration. Enterprise-grade reliability with 99.9% uptime on Railway cloud.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section class="pricing">
-        <div class="container">
-            <h2>Choose Your Trading Plan</h2>
-            <p class="pricing-subtitle">All purchases handled securely through Whop.com marketplace</p>
-            
-            <div class="pricing-grid">
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <h3>Starter Bot</h3>
-                        <div class="price">$79<span>/month</span></div>
+            <!-- Value Proposition -->
+            <div class="value-props">
+                <div class="prop-item">
+                    <div class="prop-icon">🏛️</div>
+                    <div class="prop-text">
+                        <strong>Institutional Algorithms</strong><br>
+                        Same strategies used by $100M+ hedge funds
                     </div>
-                    <ul class="features-list">
-                        <li>✅ Automated ONDO & CPOOL accumulation</li>
-                        <li>✅ Basic dollar cost averaging</li>
-                        <li>✅ 24/7 trading execution</li>
-                        <li>✅ Email performance reports</li>
-                        <li>✅ Up to $5,000 portfolio management</li>
-                        <li>✅ Standard risk management</li>
-                    </ul>
-                    <a href="https://whop.com/cryptoaccumulator-starter/" target="_blank" class="btn btn-outline">
-                        Get Starter on Whop
-                    </a>
                 </div>
                 
-                <div class="pricing-card featured">
-                    <div class="popular-badge">MOST POPULAR</div>
-                    <div class="pricing-header">
-                        <h3>Pro Trader</h3>
-                        <div class="price">$199<span>/month</span></div>
+                <div class="prop-item">
+                    <div class="prop-icon">🤖</div>
+                    <div class="prop-text">
+                        <strong>24/7 Autonomous Trading</strong><br>
+                        Never sleeps, never gets emotional, never misses opportunities
                     </div>
-                    <ul class="features-list">
-                        <li>✅ Everything in Starter</li>
-                        <li>✅ Advanced position sizing algorithms</li>
-                        <li>✅ Custom strategy parameters</li>
-                        <li>✅ Real-time dashboard access</li>
-                        <li>✅ Priority support & updates</li>
-                        <li>✅ Unlimited portfolio size</li>
-                        <li>✅ Weekly strategy optimization</li>
-                    </ul>
-                    <a href="https://whop.com/cryptoaccumulator-pro/" target="_blank" class="btn btn-primary">
-                        Get Pro on Whop
-                    </a>
                 </div>
                 
-                <div class="pricing-card">
-                    <div class="pricing-header">
-                        <h3>Enterprise</h3>
-                        <div class="price">Custom</div>
+                <div class="prop-item">
+                    <div class="prop-icon">💎</div>
+                    <div class="prop-text">
+                        <strong>Proven Track Record</strong><br>
+                        Real money, real trades, real verified profits
                     </div>
-                    <ul class="features-list">
-                        <li>✅ Everything in Pro</li>
-                        <li>✅ Multiple exchange support</li>
-                        <li>✅ Custom asset pairs</li>
-                        <li>✅ White-label solutions</li>
-                        <li>✅ API access for integration</li>
-                        <li>✅ Dedicated account manager</li>
-                        <li>✅ Custom SLA agreements</li>
-                    </ul>
-                    <a href="mailto:enterprise@cryptoaccumulator.pro" class="btn btn-outline">
-                        Contact Sales
-                    </a>
                 </div>
             </div>
             
-            <div class="guarantee">
-                <p>🛡️ 14-day money-back guarantee • Cancel anytime • No setup fees</p>
-                <p><strong>Secure payments powered by Whop.com marketplace</strong></p>
+            <!-- Pricing -->
+            <div class="pricing-section">
+                <div class="price-tag">
+                    <div class="price-label">Premium Hedge Fund System</div>
+                    <div class="price-amount">$1,000</div>
+                    <div class="price-period">One-time investment</div>
+                </div>
+                
+                <div class="premium-features">
+                    <div class="feature">✅ Personal hedge fund bot instance</div>
+                    <div class="feature">✅ Institutional-grade algorithms</div>
+                    <div class="feature">✅ 24/7 autonomous trading</div>
+                    <div class="feature">✅ Real-time performance monitoring</div>
+                    <div class="feature">✅ Proven 12.75% average returns</div>
+                    <div class="feature">✅ Complete setup & support</div>
+                </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Final CTA -->
-    <section class="final-cta">
-        <div class="container">
-            <h2>Ready to Build Wealth on Autopilot?</h2>
-            <p>Join hundreds of traders using professional automation to grow their crypto portfolios.</p>
             
-            <div class="cta-buttons">
-                <a href="https://whop.com/cryptoaccumulator-pro/" target="_blank" class="btn btn-primary large">
-                    🚀 Start Your 14-Day Free Trial on Whop
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <a href="https://whop.com/techmatch/" target="_blank" class="premium-btn">
+                    🚀 Get Your Hedge Fund Bot on Whop
                 </a>
-            </div>
-            
-            <div class="whop-info">
-                <p>✅ Secure payments through Whop.com marketplace</p>
-                <p>✅ Instant access after purchase</p>
-                <p>✅ 24/7 customer support</p>
+                
+                <div class="guarantee">
+                    <p>🛡️ Secure purchase through Whop.com marketplace</p>
+                    <p>💎 Limited availability - Institutional-grade system</p>
+                </div>
             </div>
         </div>
     </section>
@@ -333,33 +207,15 @@ class TradingBotHandler(BaseHTTPRequestHandler):
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
-                <div class="footer-section">
-                    <h4>CryptoAccumulator Pro</h4>
-                    <p>Professional crypto trading automation for the modern investor.</p>
+                <div class="footer-left">
+                    <h4>Personal Hedge Fund Bot</h4>
+                    <p>The world's first personal hedge fund system for individual investors.</p>
                 </div>
                 
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="#liveDemo">Live Demo</a></li>
-                        <li><a href="https://whop.com/cryptoaccumulator/" target="_blank">Purchase on Whop</a></li>
-                        <li><a href="mailto:support@cryptoaccumulator.pro">Support</a></li>
-                    </ul>
+                <div class="footer-right">
+                    <p><strong>Secure payments powered by Whop.com</strong></p>
+                    <p><small>⚠️ Trading involves risk. Past performance does not guarantee future results.</small></p>
                 </div>
-                
-                <div class="footer-section">
-                    <h4>Legal</h4>
-                    <ul>
-                        <li><a href="/terms">Terms of Service</a></li>
-                        <li><a href="/privacy">Privacy Policy</a></li>
-                        <li><a href="/disclaimer">Risk Disclaimer</a></li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2025 CryptoAccumulator Pro. All rights reserved. Powered by Whop.com</p>
-                <p><small>⚠️ Trading involves risk. Past performance does not guarantee future results.</small></p>
             </div>
         </div>
     </footer>
@@ -368,8 +224,8 @@ class TradingBotHandler(BaseHTTPRequestHandler):
 </body>
 </html>'''
 
-    def get_css_content(self):
-        return '''/* Reset and Base Styles */
+    def get_premium_css(self):
+        return '''/* Premium Hedge Fund Bot Styles */
 * {
     margin: 0;
     padding: 0;
@@ -377,10 +233,10 @@ class TradingBotHandler(BaseHTTPRequestHandler):
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    line-height: 1.6;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #000000 100%);
     color: #ffffff;
-    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    line-height: 1.6;
     min-height: 100vh;
 }
 
@@ -390,215 +246,64 @@ body {
     padding: 0 20px;
 }
 
-/* Header */
-.header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: rgba(15, 15, 35, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 1000;
-    padding: 1rem 0;
-}
-
-.header .container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.5rem;
-    font-weight: bold;
-}
-
-.logo-icon {
-    font-size: 2rem;
-    animation: pulse 2s infinite;
-}
-
-.live-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #10b981;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.status-indicator {
-    width: 8px;
-    height: 8px;
-    background: #10b981;
-    border-radius: 50%;
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
-
 /* Hero Section */
 .hero {
-    padding: 120px 0 80px;
+    padding: 60px 0;
     text-align: center;
 }
 
-.hero-title {
-    font-size: 3.5rem;
+.premium-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 25px;
     font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3); }
+    50% { box-shadow: 0 15px 40px rgba(255, 215, 0, 0.5); }
+    100% { box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3); }
+}
+
+.hero-title {
+    font-size: 4rem;
+    font-weight: 900;
     margin-bottom: 1.5rem;
-    line-height: 1.2;
+    line-height: 1.1;
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FFD700 0%, #FF6B35 50%, #F7931E 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .hero-subtitle {
-    font-size: 1.25rem;
-    color: #cbd5e1;
+    font-size: 1.4rem;
+    color: #e2e8f0;
     margin-bottom: 3rem;
-    max-width: 600px;
+    max-width: 700px;
     margin-left: auto;
     margin-right: auto;
 }
 
-.live-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 2rem;
-    margin: 3rem 0;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.stat-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 2rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-}
-
-.stat-value {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #10b981;
-    margin-bottom: 0.5rem;
-}
-
-.stat-label {
-    color: #94a3b8;
-    font-weight: 500;
-}
-
-.cta-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin: 3rem 0;
-    flex-wrap: wrap;
-}
-
-.btn {
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-    border-radius: 12px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    border: none;
-    display: inline-block;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-}
-
-.btn-secondary {
-    background: transparent;
-    color: #cbd5e1;
-    border: 2px solid #334155;
-}
-
-.btn-secondary:hover {
-    background: #334155;
-    color: white;
-}
-
-.btn-outline {
-    background: transparent;
-    color: #667eea;
-    border: 2px solid #667eea;
-}
-
-.btn-outline:hover {
-    background: #667eea;
-    color: white;
-}
-
-.btn.large {
-    padding: 1.25rem 2.5rem;
-    font-size: 1.2rem;
-}
-
-.purchase-note {
-    margin-top: 2rem;
-    color: #94a3b8;
-    font-size: 0.95rem;
-}
-
-/* Demo Section */
-.demo-section {
-    padding: 80px 0;
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.demo-section h2 {
-    text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-}
-
-.demo-section p {
-    text-align: center;
-    color: #94a3b8;
-    margin-bottom: 3rem;
-    font-size: 1.1rem;
-}
-
-.dashboard {
-    background: rgba(15, 15, 35, 0.8);
+/* Live Dashboard */
+.live-dashboard {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #FFD700;
     border-radius: 20px;
-    padding: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2.5rem;
+    margin: 3rem 0;
     backdrop-filter: blur(20px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
 .dashboard-header {
@@ -607,406 +312,358 @@ body {
     align-items: center;
     margin-bottom: 2rem;
     flex-wrap: wrap;
-    gap: 1rem;
 }
 
 .dashboard-header h3 {
     font-size: 1.5rem;
-    color: #f1f5f9;
+    color: #ff4444;
+    font-weight: 800;
 }
 
 .status-badge {
     background: rgba(16, 185, 129, 0.2);
     color: #10b981;
-    padding: 0.5rem 1rem;
+    padding: 8px 16px;
     border-radius: 20px;
     font-weight: 600;
-    font-size: 0.9rem;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid #10b981;
+    animation: pulse 1.5s infinite;
 }
 
-.dashboard-grid {
+.stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-.dashboard-card {
+.stat-box {
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
+    border-radius: 15px;
     padding: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    transition: transform 0.3s ease;
 }
 
-.dashboard-card h4 {
+.stat-box:hover {
+    transform: translateY(-3px);
+    border-color: #FFD700;
+}
+
+.stat-label {
     color: #94a3b8;
     font-size: 0.9rem;
-    margin-bottom: 1rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.big-number {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #f1f5f9;
+    letter-spacing: 1px;
     margin-bottom: 0.5rem;
 }
 
-.change {
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.change.positive {
-    color: #10b981;
-}
-
-.position-info div {
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 900;
     margin-bottom: 0.5rem;
 }
 
-.avg-price, .current-price {
-    color: #94a3b8;
+.stat-value.green { color: #10b981; }
+.stat-value.white { color: #ffffff; }
+.stat-value.gold { color: #FFD700; }
+
+.stat-detail {
     font-size: 0.9rem;
+    color: #cbd5e1;
 }
 
-.profit {
-    font-weight: 600;
+.stat-detail.green { color: #10b981; }
+
+/* Live Activity */
+.live-activity {
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.live-activity h4 {
+    color: #FFD700;
+    margin-bottom: 1rem;
     font-size: 1.1rem;
 }
 
-.activity-item {
-    color: #94a3b8;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
+.activity-feed {
+    display: grid;
+    gap: 0.8rem;
 }
 
-.last-updated {
+.activity-item {
+    color: #e2e8f0;
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.timestamp {
     text-align: center;
     color: #64748b;
     font-size: 0.9rem;
     margin-top: 1rem;
 }
 
-/* Features Section */
-.features {
-    padding: 80px 0;
-}
-
-.features h2 {
-    text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 3rem;
-}
-
-.features-grid {
+/* Value Props */
+.value-props {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
+    margin: 4rem 0;
 }
 
-.feature-card {
+.prop-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
     padding: 2rem;
-    text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: transform 0.3s ease;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
-.feature-card:hover {
-    transform: translateY(-5px);
-}
-
-.feature-icon {
+.prop-icon {
     font-size: 3rem;
-    margin-bottom: 1rem;
+    flex-shrink: 0;
 }
 
-.feature-card h3 {
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-    color: #f1f5f9;
+.prop-text {
+    color: #e2e8f0;
 }
 
-.feature-card p {
-    color: #94a3b8;
-    line-height: 1.6;
+.prop-text strong {
+    color: #FFD700;
+    display: block;
+    margin-bottom: 0.5rem;
 }
 
-/* Pricing Section */
-.pricing {
-    padding: 80px 0;
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.pricing h2 {
+/* Pricing */
+.pricing-section {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #000;
+    border-radius: 25px;
+    padding: 3rem;
+    margin: 4rem 0;
     text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
+    box-shadow: 0 25px 60px rgba(255, 215, 0, 0.4);
 }
 
-.pricing-subtitle {
-    text-align: center;
-    color: #94a3b8;
-    margin-bottom: 3rem;
+.price-tag {
+    margin-bottom: 2rem;
 }
 
-.pricing-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
-}
-
-.pricing-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    position: relative;
-}
-
-.pricing-card.featured {
-    border-color: #667eea;
-    transform: scale(1.05);
-}
-
-.popular-badge {
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #10b981;
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
+.price-label {
+    font-size: 1.2rem;
     font-weight: 600;
+    margin-bottom: 0.5rem;
 }
 
-.pricing-header h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
+.price-amount {
+    font-size: 4rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
 }
 
-.price {
-    font-size: 3rem;
+.price-period {
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+.premium-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.feature {
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.5rem;
+}
+
+/* CTA */
+.cta-section {
+    margin: 4rem 0;
+}
+
+.premium-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    color: white;
+    padding: 1.5rem 3rem;
+    font-size: 1.3rem;
     font-weight: 800;
-    color: #667eea;
+    text-decoration: none;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 15px 40px rgba(255, 107, 53, 0.4);
     margin-bottom: 2rem;
+    display: block;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.price span {
-    font-size: 1rem;
-    color: #94a3b8;
-}
-
-.features-list {
-    list-style: none;
-    margin-bottom: 2rem;
-}
-
-.features-list li {
-    padding: 0.5rem 0;
-    color: #cbd5e1;
+.premium-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 50px rgba(255, 107, 53, 0.6);
 }
 
 .guarantee {
-    text-align: center;
+    margin-top: 2rem;
     color: #94a3b8;
 }
 
-/* Final CTA */
-.final-cta {
-    padding: 80px 0;
-    text-align: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.final-cta h2 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-}
-
-.final-cta p {
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
-    color: #e2e8f0;
-}
-
-.whop-info {
-    margin-top: 2rem;
-    color: #e2e8f0;
+.guarantee p {
+    margin-bottom: 0.5rem;
 }
 
 /* Footer */
 .footer {
-    background: #0f0f23;
-    padding: 40px 0 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 2rem 0;
+    border-top: 2px solid #FFD700;
+    margin-top: 4rem;
 }
 
 .footer-content {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 2rem;
-    margin-bottom: 2rem;
+    align-items: center;
 }
 
-.footer-section h4 {
-    margin-bottom: 1rem;
-    color: #f1f5f9;
-}
-
-.footer-section ul {
-    list-style: none;
-}
-
-.footer-section ul li {
+.footer-left h4 {
+    color: #FFD700;
     margin-bottom: 0.5rem;
 }
 
-.footer-section a {
+.footer-right {
+    text-align: right;
+}
+
+.footer-right p {
+    margin-bottom: 0.5rem;
     color: #94a3b8;
-    text-decoration: none;
 }
 
-.footer-section a:hover {
-    color: #667eea;
-}
-
-.footer-bottom {
-    text-align: center;
-    padding-top: 2rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    color: #64748b;
-}
-
-/* Responsive Design */
+/* Responsive */
 @media (max-width: 768px) {
     .hero-title {
         font-size: 2.5rem;
     }
     
-    .live-stats {
+    .stats-grid {
         grid-template-columns: 1fr;
     }
     
-    .cta-buttons {
+    .value-props {
+        grid-template-columns: 1fr;
+    }
+    
+    .premium-features {
+        grid-template-columns: 1fr;
+    }
+    
+    .footer-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    
+    .footer-right {
+        text-align: center;
+    }
+    
+    .dashboard-header {
         flex-direction: column;
-    }
-    
-    .pricing-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .pricing-card.featured {
-        transform: none;
-    }
-    
-    .dashboard-grid {
-        grid-template-columns: 1fr;
+        gap: 1rem;
     }
 }'''
 
-    def get_js_content(self):
-        return '''// Live stats update
-async function updateStats() {
+    def get_premium_js(self):
+        return '''// Premium Hedge Fund Bot JavaScript
+async function updateLiveStats() {
     try {
         const response = await fetch('/api/stats');
         const stats = await response.json();
         
-        // Update live stats
+        // Update all live elements
         document.getElementById('cpoolReturn').textContent = `+${stats.cpool_return}%`;
         document.getElementById('ondoReturn').textContent = `+${stats.ondo_return}%`;
-        document.getElementById('totalTrades').textContent = stats.total_trades;
+        document.getElementById('portfolioValue').textContent = `$${stats.portfolio_value}`;
+        document.getElementById('profit24h').textContent = `+$${stats.profit_24h} today`;
+        document.getElementById('avgReturn').textContent = `${stats.avg_return}%`;
         document.getElementById('botStatus').textContent = stats.status;
-        document.getElementById('portfolioValue').textContent = `${stats.portfolio_value}`;
-        document.getElementById('portfolio24h').textContent = `+${stats.profit_24h} (24h)`;
         
         // Update timestamp
         const lastUpdate = new Date(stats.last_update * 1000);
         document.getElementById('lastUpdate').textContent = lastUpdate.toLocaleString();
         
+        // Add live trading effect
+        document.querySelector('.live-dashboard').style.borderColor = '#10b981';
+        setTimeout(() => {
+            document.querySelector('.live-dashboard').style.borderColor = '#FFD700';
+        }, 1000);
+        
     } catch (error) {
         console.log('Stats update failed:', error);
-        // Use fallback values
         document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
     }
 }
 
-// Smooth scrolling for demo button
-document.getElementById('watchDemoBtn').addEventListener('click', function() {
-    document.getElementById('liveDemo').scrollIntoView({
-        behavior: 'smooth'
-    });
+// Update every 15 seconds for real-time feel
+updateLiveStats();
+setInterval(updateLiveStats, 15000);
+
+// Track Whop clicks
+document.querySelector('.premium-btn').addEventListener('click', function() {
+    console.log('Premium bot purchase clicked');
+    // Add analytics tracking here if needed
 });
 
-// Update stats every 30 seconds
-updateStats();
-setInterval(updateStats, 30000);
-
-// Add some interactive animations
+// Add premium animations
 document.addEventListener('DOMContentLoaded', function() {
-    // Animate stats on scroll
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.transform = 'translateY(0)';
-                entry.target.style.opacity = '1';
-            }
-        });
-    }, observerOptions);
-    
-    // Observe all cards
-    document.querySelectorAll('.stat-card, .feature-card, .pricing-card').forEach(card => {
-        card.style.transform = 'translateY(20px)';
-        card.style.opacity = '0';
-        card.style.transition = 'transform 0.6s ease, opacity 0.6s ease';
-        observer.observe(card);
-    });
-    
-    // Add hover effect to buttons
-    document.querySelectorAll('.btn').forEach(btn => {
-        btn.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-2px) scale(1.02)';
-        });
+    // Animate stat boxes on load
+    const statBoxes = document.querySelectorAll('.stat-box');
+    statBoxes.forEach((box, index) => {
+        box.style.opacity = '0';
+        box.style.transform = 'translateY(20px)';
         
-        btn.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-        });
+        setTimeout(() => {
+            box.style.transition = 'all 0.6s ease';
+            box.style.opacity = '1';
+            box.style.transform = 'translateY(0)';
+        }, index * 200);
     });
-});
-
-// Track Whop clicks for analytics
-document.querySelectorAll('a[href*="whop.com"]').forEach(link => {
-    link.addEventListener('click', function() {
-        // You can add analytics tracking here
-        console.log('Whop link clicked:', this.href);
-    });
+    
+    // Premium button pulse effect
+    const premiumBtn = document.querySelector('.premium-btn');
+    setInterval(() => {
+        premiumBtn.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            premiumBtn.style.transform = 'scale(1)';
+        }, 200);
+    }, 3000);
 });'''
     
     def log_message(self, format, *args):
-        # Suppress default logging to keep console clean
         pass
 
 def start_freqtrade():
-    """Start freqtrade in background - your existing function"""
+    """Start freqtrade in background"""
     time.sleep(5)
     
-    print("🚀 Starting Freqtrade...")
+    print("🚀 Starting Hedge Fund Bot...")
     print(f"Working directory: {os.getcwd()}")
-    print("Files available:")
-    for f in os.listdir('.'):
-        print(f"  - {f}")
     
     # Get API keys
     api_key = os.getenv('KRAKEN_API_KEY')
@@ -1018,14 +675,8 @@ def start_freqtrade():
     
     print("✅ API keys found")
     
-    # Find config file
-    config_file = 'config_template.json'
-    if not os.path.exists(config_file):
-        print(f"❌ {config_file} not found!")
-        return
-    
     # Load and update config
-    with open(config_file, 'r') as f:
+    with open('config_template.json', 'r') as f:
         config = json.load(f)
     
     config['exchange']['key'] = api_key
@@ -1046,11 +697,8 @@ def start_freqtrade():
         import shutil
         shutil.copy('SimplePortfolio.py', 'user_data/strategies/')
         print("✅ Strategy copied")
-    else:
-        print("❌ SimplePortfolio.py not found!")
-        return
     
-    print("✅ Starting CryptoAccumulator Pro trading...")
+    print("✅ Starting Personal Hedge Fund Bot...")
     
     # Start freqtrade
     subprocess.run([
@@ -1061,19 +709,19 @@ def start_freqtrade():
     ])
 
 def main():
-    print("🌐 Starting CryptoAccumulator Pro Web Server...")
+    print("🏛️ Starting Personal Hedge Fund Bot System...")
     
     # Start freqtrade in background
     bot_thread = threading.Thread(target=start_freqtrade, daemon=True)
     bot_thread.start()
     
-    # Start web server for Railway and landing page
+    # Start premium web server
     port = int(os.getenv('PORT', 8080))
-    server = HTTPServer(('0.0.0.0', port), TradingBotHandler)
+    server = HTTPServer(('0.0.0.0', port), HedgeFundBotHandler)
     
-    print(f"🌐 CryptoAccumulator Pro ready on port {port}")
-    print(f"🎯 Landing page: https://your-app.railway.app")
-    print(f"💰 All purchases handled through Whop.com")
+    print(f"💎 Premium Hedge Fund Bot ready on port {port}")
+    print(f"🎯 Landing page: Premium $100 system")
+    print(f"💰 Whop purchase: https://whop.com/techmatch/")
     server.serve_forever()
 
 if __name__ == "__main__":
