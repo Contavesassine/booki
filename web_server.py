@@ -319,7 +319,7 @@ class HedgeFundBotHandler(BaseHTTPRequestHandler):
             <div class="pricing-section">
                 <div class="price-tag">
                     <div class="price-label">Premium Hedge Fund System</div>
-                    <div class="price-amount">$1,000</div>
+                    <div class="price-amount">$100</div>
                     <div class="price-period">One-time investment</div>
                 </div>
                 
