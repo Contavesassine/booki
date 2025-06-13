@@ -1,9 +1,9 @@
 {
     "$schema": "https://schema.freqtrade.io/schema.json",
-    "max_open_trades": 4,
+    "max_open_trades": 6,
     "stake_currency": "USD",
-    "stake_amount": 2,
-    "tradable_balance_ratio": 0.99,
+    "stake_amount": 4,
+    "tradable_balance_ratio": 0.95,
     "fiat_display_currency": "USD",
     "dry_run": false,
     "cancel_open_orders_on_exit": false,
