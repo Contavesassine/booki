@@ -2,73 +2,126 @@ from freqtrade.strategy import IStrategy
 from pandas import DataFrame
 import talib.abstract as ta
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 class SimplePortfolio(IStrategy):
     INTERFACE_VERSION = 3
     
-    # Weekly accumulation settings
-    minimal_roi = {"0": 0.30}  # 30% profit target (hold longer)
-    stoploss = -0.12           # 12% stop loss
-    timeframe = '1h'           
+    # REALISTIC profit targets - not delusional 30%
+    minimal_roi = {
+        "0": 0.15,      # 15% max profit target
+        "60": 0.08,     # 8% after 1 hour
+        "180": 0.05,    # 5% after 3 hours  
+        "360": 0.03,    # 3% after 6 hours
+        "720": 0.02     # 2% after 12 hours
+    }
+    
+    stoploss = -0.08           # Tighter 8% stop loss
+    timeframe = '5m'           # More responsive 5min candles
     process_only_new_candles = True
-    startup_candle_count = 30
+    startup_candle_count = 50
     can_short = False
     
-    # Position management for weekly cycles
+    # Position management
     position_adjustment_enable = True
-    max_entry_position_adjustment = 4  # Up to 4 additional buys per week
+    max_entry_position_adjustment = 3  # Max 3 additional buys (4 total entries)
     
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Indicators optimized for weekly accumulation
+        """
+        ACTUAL technical analysis indicators - not random shit
+        """
+        # RSI for oversold/overbought
         dataframe['rsi'] = ta.RSI(dataframe, timeperiod=14)
-        dataframe['rsi_slow'] = ta.RSI(dataframe, timeperiod=21)
-        dataframe['ema_12'] = ta.EMA(dataframe, timeperiod=12)
-        dataframe['ema_26'] = ta.EMA(dataframe, timeperiod=26)
-        dataframe['sma_50'] = ta.SMA(dataframe, timeperiod=50)
+        dataframe['rsi_smooth'] = ta.EMA(dataframe['rsi'], timeperiod=5)
         
-        # MACD for trend confirmation
-        macd = ta.MACD(dataframe)
+        # Multiple EMAs for trend analysis
+        dataframe['ema_8'] = ta.EMA(dataframe, timeperiod=8)
+        dataframe['ema_21'] = ta.EMA(dataframe, timeperiod=21)
+        dataframe['ema_50'] = ta.EMA(dataframe, timeperiod=50)
+        
+        # MACD for momentum
+        macd = ta.MACD(dataframe, fastperiod=12, slowperiod=26, signalperiod=9)
         dataframe['macd'] = macd['macd']
         dataframe['macd_signal'] = macd['macdsignal']
+        dataframe['macd_hist'] = macd['macdhist']
         
-        # Volume analysis
-        dataframe['volume_sma'] = dataframe['volume'].rolling(window=20).mean()
-        
-        # Bollinger Bands for oversold conditions
-        bb = ta.BBANDS(dataframe)
+        # Bollinger Bands for volatility
+        bb = ta.BBANDS(dataframe, timeperiod=20, nbdevup=2, nbdevdn=2)
         dataframe['bb_lower'] = bb['lowerband']
         dataframe['bb_middle'] = bb['middleband']
         dataframe['bb_upper'] = bb['upperband']
+        dataframe['bb_percent'] = (dataframe['close'] - dataframe['bb_lower']) / (dataframe['bb_upper'] - dataframe['bb_lower'])
+        
+        # Volume analysis
+        dataframe['volume_sma'] = dataframe['volume'].rolling(window=20).mean()
+        dataframe['volume_ratio'] = dataframe['volume'] / dataframe['volume_sma']
+        
+        # Support/Resistance levels
+        dataframe['support'] = dataframe['low'].rolling(window=20).min()
+        dataframe['resistance'] = dataframe['high'].rolling(window=20).max()
+        
+        # Trend strength
+        dataframe['trend_strength'] = (dataframe['ema_8'] - dataframe['ema_50']) / dataframe['ema_50'] * 100
         
         return dataframe
     
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Aggressive weekly accumulation - buy on multiple conditions
+        """
+        SMART entry conditions - wait for actual opportunities
+        """
         dataframe.loc[
             (
-                # Primary conditions (any one triggers buy)
-                (dataframe['rsi'] < 70) |  # Not extremely overbought
-                (dataframe['close'] < dataframe['bb_middle']) |  # Below BB middle
-                (dataframe['close'] < dataframe['ema_26']) |  # Below longer EMA
-                (dataframe['macd'] < dataframe['macd_signal'])  # MACD bearish
-            ) &
-            # Safety conditions (all must be true)
-            (dataframe['rsi'] > 20) &  # Not extremely oversold
-            (dataframe['volume'] > dataframe['volume_sma'] * 0.3) &  # Some volume
-            (dataframe['close'] > dataframe['sma_50'] * 0.85),  # Not in severe downtrend
+                # TREND CONDITIONS (must be in uptrend)
+                (dataframe['ema_8'] > dataframe['ema_21']) &  # Short term up
+                (dataframe['ema_21'] > dataframe['ema_50']) &  # Medium term up
+                (dataframe['trend_strength'] > -2) &  # Not in severe downtrend
+                
+                # OVERSOLD CONDITIONS (buy the dip)
+                (dataframe['rsi'] < 40) &  # RSI oversold
+                (dataframe['rsi'] > 25) &  # But not extremely oversold
+                (dataframe['bb_percent'] < 0.3) &  # Near lower BB
+                
+                # MOMENTUM CONDITIONS (confirming reversal)
+                (dataframe['macd_hist'] > dataframe['macd_hist'].shift(1)) &  # MACD improving
+                (dataframe['close'] > dataframe['support'] * 1.005) &  # Above support
+                
+                # VOLUME CONDITIONS (institutional interest)
+                (dataframe['volume_ratio'] > 0.8) &  # Decent volume
+                (dataframe['volume_ratio'] < 3.0) &  # Not panic selling
+                
+                # PRICE ACTION CONDITIONS
+                (dataframe['close'] > dataframe['open']) |  # Green candle OR
+                (dataframe['close'] > dataframe['close'].shift(1))  # Higher close
+            ),
             'enter_long'] = 1
         
         return dataframe
     
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Very conservative exit - focus on accumulation
+        """
+        TAKE PROFITS - don't be greedy
+        """
         dataframe.loc[
-            (dataframe['rsi'] > 85) &  # Extremely overbought
-            (dataframe['close'] > dataframe['bb_upper']) &  # Above upper BB
-            (dataframe['macd'] > dataframe['macd_signal']) &  # MACD bullish
-            (dataframe['close'] > dataframe['ema_12'] * 1.15),  # 15% above short EMA
+            (
+                # OVERBOUGHT CONDITIONS
+                (dataframe['rsi'] > 70) &  # RSI overbought
+                (dataframe['bb_percent'] > 0.8) &  # Near upper BB
+                
+                # MOMENTUM WEAKENING
+                (dataframe['macd_hist'] < dataframe['macd_hist'].shift(1)) &  # MACD weakening
+                (dataframe['close'] < dataframe['resistance'] * 0.995) &  # Below resistance
+                
+                # PROFIT TAKING
+                (dataframe['close'] > dataframe['ema_8'] * 1.03)  # 3% above EMA
+            ) |
+            (
+                # TREND REVERSAL
+                (dataframe['ema_8'] < dataframe['ema_21']) &  # Short term trend broken
+                (dataframe['rsi'] < 50) &  # RSI below midline
+                (dataframe['macd'] < dataframe['macd_signal'])  # MACD bearish
+            ),
             'exit_long'] = 1
         
         return dataframe
@@ -76,73 +129,91 @@ class SimplePortfolio(IStrategy):
     def adjust_trade_position(self, trade, current_time, current_rate, current_profit, 
                             min_stake, max_stake, **kwargs):
         """
-        Dollar cost averaging - add more when price drops
-        Designed for weekly refill cycle
+        WORKING DCA logic - actually add to losing positions
         """
-        # Get day of week (0=Monday, 6=Sunday)
-        current_day = current_time.weekday()
+        if current_profit >= 0:
+            return None  # Don't add to winning positions
         
-        # More aggressive adding early in the week (Monday-Wednesday)
-        if current_day <= 2:  # Monday to Wednesday
-            profit_threshold = -0.03  # Add when down 3%
-        else:  # Thursday to Sunday
-            profit_threshold = -0.06  # Add when down 6%
+        # Calculate additional stake based on loss severity
+        if current_profit < -0.06:  # Down 6%+
+            additional_stake = min_stake * 1.5  # Larger add
+            logger.info(f"🔥 HEAVY DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+        elif current_profit < -0.04:  # Down 4-6%
+            additional_stake = min_stake * 1.0  # Normal add
+            logger.info(f"📈 DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+        elif current_profit < -0.02:  # Down 2-4%
+            additional_stake = min_stake * 0.7  # Small add
+            logger.info(f"💰 Small DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+        else:
+            return None  # Don't add yet
         
-        if current_profit < profit_threshold:
-            try:
-                # Calculate additional stake (smaller amounts for more frequent adding)
-                if current_profit < -0.10:  # Down 10%+
-                    additional_stake = min_stake * 1.2  # 120% of minimum
-                elif current_profit < -0.05:  # Down 5-10%
-                    additional_stake = min_stake * 1.0  # 100% of minimum
-                else:  # Down 3-5%
-                    additional_stake = min_stake * 0.8  # 80% of minimum
-                
-                logger.info(f"📈 Adding to {trade.pair}: profit={current_profit:.2%}, "
-                          f"additional=${additional_stake:.2f}, day={current_day}")
-                return additional_stake
-                
-            except Exception as e:
-                logger.error(f"❌ Position adjustment error: {e}")
+        # Ensure we have enough adjustments left
+        if trade.nr_of_successful_entries >= (self.max_entry_position_adjustment + 1):
+            logger.info(f"⚠️ Max entries reached for {trade.pair}")
+            return None
         
-        return None
+        return min(additional_stake, max_stake)
     
     def custom_stake_amount(self, pair: str, current_time, current_rate: float,
                           proposed_stake: float, min_stake: float, max_stake: float,
                           entry_tag: str, **kwargs) -> float:
         """
-        Dynamic stake sizing for weekly cycles
+        Smart position sizing based on market conditions
         """
-        # Get day of week
-        current_day = current_time.weekday()
+        # Use 80% of configured stake for initial entries
+        initial_stake = proposed_stake * 0.8
         
-        # Larger positions early in week when balance is fresh
-        if current_day <= 1:  # Monday-Tuesday (refill day)
-            stake_multiplier = 1.3
-        elif current_day <= 3:  # Wednesday-Thursday
-            stake_multiplier = 1.1
-        else:  # Friday-Sunday (preserve some funds)
-            stake_multiplier = 0.9
+        logger.info(f"💰 Initial stake for {pair}: ${initial_stake:.2f}")
         
-        # Calculate final stake amount
-        final_stake = max(
-            proposed_stake * stake_multiplier,
-            min_stake * 1.1  # Always 10% above minimum
-        )
+        return max(initial_stake, min_stake)
+    
+    def custom_exit_price(self, pair: str, trade, current_time, proposed_rate: float,
+                         current_profit: float, **kwargs) -> float:
+        """
+        Smart exit pricing - don't leave money on the table
+        """
+        if current_profit > 0.05:  # If up 5%+, try to get better price
+            better_price = proposed_rate * 1.001  # 0.1% above market
+            logger.info(f"💎 Aiming for better exit price: ${better_price:.4f} vs ${proposed_rate:.4f}")
+            return better_price
         
-        # Don't exceed max stake
-        final_stake = min(final_stake, max_stake)
-        
-        logger.info(f"💰 Stake for {pair}: ${final_stake:.2f} (day {current_day}, "
-                   f"multiplier {stake_multiplier})")
-        
-        return final_stake
+        return proposed_rate
     
     def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float,
                           time_in_force: str, current_time, entry_tag, **kwargs) -> bool:
         """
-        Final check before entering trade
+        Final entry confirmation with detailed logging
         """
-        # Log the trade for monitoring
-        logger.info(f"🎯 Entering {pair}: {amount:.4f} @ ${rate:.4f} = ${amount * rate:.2f}")
+        trade_value = amount * rate
+        logger.info(f"🎯 ENTRY CONFIRMED: {pair}")
+        logger.info(f"   Amount: {amount:.4f} @ ${rate:.4f} = ${trade_value:.2f}")
+        logger.info(f"   Time: {current_time}")
+        logger.info(f"   Type: {order_type}")
+        
         return True
+    
+    def confirm_trade_exit(self, pair: str, trade, order_type: str, amount: float, 
+                          rate: float, time_in_force: str, exit_reason: str, 
+                          current_time, **kwargs) -> bool:
+        """
+        Exit confirmation with profit tracking
+        """
+        trade_value = amount * rate
+        profit_pct = trade.calc_profit_ratio(rate) * 100
+        profit_usd = trade.calc_profit(rate)
+        
+        logger.info(f"🚪 EXIT CONFIRMED: {pair}")
+        logger.info(f"   Amount: {amount:.4f} @ ${rate:.4f} = ${trade_value:.2f}")
+        logger.info(f"   Profit: {profit_pct:.2f}% (${profit_usd:.2f})")
+        logger.info(f"   Reason: {exit_reason}")
+        logger.info(f"   Duration: {current_time - trade.open_date}")
+        
+        return True
+    
+    def leverage(self, pair: str, current_time, current_rate: float,
+                proposed_leverage: float, max_leverage: float, entry_tag: str, 
+                side: str, **kwargs) -> float:
+        """
+        No leverage - spot trading only
+        """
+        return 1.0
