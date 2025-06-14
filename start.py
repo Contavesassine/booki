@@ -133,10 +133,10 @@ def main():
     
     logger.info("🚀 Starting Smart Portfolio Bot...")
     logger.info("💡 Fixed Strategy Features:")
-    logger.info("   - Realistic 5-15% profit targets")
-    logger.info("   - Proper technical analysis")
-    logger.info("   - Working DCA logic")
-    logger.info("   - 8% stop loss")
+    logger.info("   - Fast 2-8% profit targets (DCA style)")
+    logger.info("   - Selective entry signals")
+    logger.info("   - Heavy DCA when losing")
+    logger.info("   - Small initial stakes")
     logger.info("   - 5-minute timeframe")
     
     # Get API keys
@@ -193,21 +193,20 @@ def main():
         logger.info(f"   - Max DCA entries: {config['max_entry_position_adjustment']}")
         
         logger.info("🚀 Starting FreqTrade bot...")
-        logger.info("📈 Bot will now trade automatically based on technical analysis")
+        logger.info("📈 Bot will now trade with profit-focused DCA strategy")
         logger.info("⚠️  Monitor logs for entry/exit signals and DCA actions")
         
         # Small delay to ensure logs are written
         time.sleep(2)
         
-        # Start FreqTrade using subprocess instead of execv
-        # This is more reliable and handles PATH properly
+        # FIXED COMMAND - removed invalid --verbosity argument
         cmd = [
             'freqtrade', 'trade',
             '--config', 'user_data/config.json',
             '--strategy', 'SimplePortfolio',
             '--userdir', 'user_data',
             '--logfile', 'user_data/logs/freqtrade.log',
-            '--verbosity', '3'
+            '-vvv'  # Use valid verbose flag instead of --verbosity 3
         ]
         
         logger.info(f"🎯 Executing command: {' '.join(cmd)}")
