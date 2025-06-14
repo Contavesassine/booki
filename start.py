@@ -4,6 +4,7 @@ import json
 import subprocess
 import sys
 import time
+import shutil
 
 def setup_logging():
     """Setup comprehensive logging"""
@@ -105,6 +106,28 @@ def get_config_template():
         "max_entry_position_adjustment": 3
     }
 
+def find_freqtrade_path():
+    """Find the correct path to freqtrade executable"""
+    # Try common paths
+    possible_paths = [
+        '/usr/local/bin/freqtrade',
+        '/usr/bin/freqtrade',
+        '/bin/freqtrade',
+        'freqtrade'  # This will use PATH
+    ]
+    
+    for path in possible_paths:
+        if path == 'freqtrade':
+            # Use shutil.which to find in PATH
+            found_path = shutil.which('freqtrade')
+            if found_path:
+                return found_path
+        else:
+            if os.path.exists(path) and os.access(path, os.X_OK):
+                return path
+    
+    return None
+
 def main():
     logger = setup_logging()
     
@@ -127,6 +150,14 @@ def main():
     
     logger.info(f"✅ API keys loaded: {api_key[:8]}...")
     
+    # Find freqtrade executable
+    freqtrade_path = find_freqtrade_path()
+    if not freqtrade_path:
+        logger.error("❌ Could not find freqtrade executable!")
+        sys.exit(1)
+    
+    logger.info(f"✅ Found freqtrade at: {freqtrade_path}")
+    
     # Load config from embedded template - NO FILE READING
     try:
         config = get_config_template()
@@ -146,7 +177,6 @@ def main():
         logger.info("✅ Configuration created from embedded template")
         
         # Copy strategy
-        import shutil
         if os.path.exists('SimplePortfolio.py'):
             shutil.copy('SimplePortfolio.py', 'user_data/strategies/')
             logger.info("✅ Strategy copied to user_data/strategies/")
@@ -169,15 +199,25 @@ def main():
         # Small delay to ensure logs are written
         time.sleep(2)
         
-        # Start FreqTrade
-        os.execv('/usr/local/bin/freqtrade', [
+        # Start FreqTrade using subprocess instead of execv
+        # This is more reliable and handles PATH properly
+        cmd = [
             'freqtrade', 'trade',
             '--config', 'user_data/config.json',
             '--strategy', 'SimplePortfolio',
             '--userdir', 'user_data',
             '--logfile', 'user_data/logs/freqtrade.log',
             '--verbosity', '3'
-        ])
+        ]
+        
+        logger.info(f"🎯 Executing command: {' '.join(cmd)}")
+        
+        # Use subprocess.run instead of os.execv for better error handling
+        result = subprocess.run(cmd, check=False)
+        
+        if result.returncode != 0:
+            logger.error(f"❌ FreqTrade exited with code: {result.returncode}")
+            sys.exit(result.returncode)
         
     except Exception as e:
         logger.error(f"❌ Startup error: {e}")
