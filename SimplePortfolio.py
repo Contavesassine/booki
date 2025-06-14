@@ -93,7 +93,7 @@ class SimplePortfolio(IStrategy):
         """
         AGGRESSIVE DCA - this is where DCA bots make their money
         """
-        if current_profit >= -0.03:  # Only add when down 3%+ (was 1%)
+        if current_profit >= -0.01:  # Only add when down 3%+ (was 1%)
             return None  
         
         # BIGGER DCA amounts - go heavy when losing
