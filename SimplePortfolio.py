@@ -9,91 +9,72 @@ logger = logging.getLogger(__name__)
 class SimplePortfolio(IStrategy):
     INTERFACE_VERSION = 3
     
-    # REALISTIC profit targets - not delusional 30%
+    # AGGRESSIVE profit targets - hold for real gains
     minimal_roi = {
-        "0": 0.15,      # 15% max profit target
-        "60": 0.08,     # 8% after 1 hour
-        "180": 0.05,    # 5% after 3 hours  
-        "360": 0.03,    # 3% after 6 hours
-        "720": 0.02     # 2% after 12 hours
+        "0": 0.25,      # 25% max profit (let winners run)
+        "180": 0.15,    # 15% after 3 hours
+        "720": 0.10,    # 10% after 12 hours  
+        "1440": 0.05,   # 5% after 1 day
+        "2880": 0.03    # 3% after 2 days
     }
     
-    stoploss = -0.08           # Tighter 8% stop loss
-    timeframe = '5m'           # More responsive 5min candles
+    stoploss = -0.12           # Wider 12% stop loss (give trades room)
+    timeframe = '5m'           
     process_only_new_candles = True
-    startup_candle_count = 50
+    startup_candle_count = 30
     can_short = False
     
-    # Position management
+    # AGGRESSIVE position management
     position_adjustment_enable = True
-    max_entry_position_adjustment = 3  # Max 3 additional buys (4 total entries)
+    max_entry_position_adjustment = 4  # Max 4 additional buys (5 total entries)
     
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
-        ACTUAL technical analysis indicators - not random shit
+        SIMPLE indicators that actually work
         """
-        # RSI for oversold/overbought
+        # RSI - simple and effective
         dataframe['rsi'] = ta.RSI(dataframe, timeperiod=14)
-        dataframe['rsi_smooth'] = ta.EMA(dataframe['rsi'], timeperiod=5)
         
-        # Multiple EMAs for trend analysis
-        dataframe['ema_8'] = ta.EMA(dataframe, timeperiod=8)
+        # EMAs for trend
+        dataframe['ema_9'] = ta.EMA(dataframe, timeperiod=9)
         dataframe['ema_21'] = ta.EMA(dataframe, timeperiod=21)
-        dataframe['ema_50'] = ta.EMA(dataframe, timeperiod=50)
         
-        # MACD for momentum
-        macd = ta.MACD(dataframe, fastperiod=12, slowperiod=26, signalperiod=9)
-        dataframe['macd'] = macd['macd']
-        dataframe['macd_signal'] = macd['macdsignal']
-        dataframe['macd_hist'] = macd['macdhist']
+        # Volume for confirmation
+        dataframe['volume_avg'] = dataframe['volume'].rolling(window=20).mean()
         
-        # Bollinger Bands for volatility
-        bb = ta.BBANDS(dataframe, timeperiod=20, nbdevup=2, nbdevdn=2)
-        dataframe['bb_lower'] = bb['lowerband']
-        dataframe['bb_middle'] = bb['middleband']
-        dataframe['bb_upper'] = bb['upperband']
-        dataframe['bb_percent'] = (dataframe['close'] - dataframe['bb_lower']) / (dataframe['bb_upper'] - dataframe['bb_lower'])
+        # Price momentum
+        dataframe['price_change'] = dataframe['close'].pct_change(periods=5) * 100
         
-        # Volume analysis
-        dataframe['volume_sma'] = dataframe['volume'].rolling(window=20).mean()
-        dataframe['volume_ratio'] = dataframe['volume'] / dataframe['volume_sma']
-        
-        # Support/Resistance levels
-        dataframe['support'] = dataframe['low'].rolling(window=20).min()
-        dataframe['resistance'] = dataframe['high'].rolling(window=20).max()
-        
-        # Trend strength
-        dataframe['trend_strength'] = (dataframe['ema_8'] - dataframe['ema_50']) / dataframe['ema_50'] * 100
+        # Support levels (buying opportunities)
+        dataframe['low_5'] = dataframe['low'].rolling(window=5).min()
+        dataframe['low_20'] = dataframe['low'].rolling(window=20).min()
         
         return dataframe
     
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
-        SMART entry conditions - wait for actual opportunities
+        AGGRESSIVE buying - catch dips and trends
         """
         dataframe.loc[
             (
-                # TREND CONDITIONS (must be in uptrend)
-                (dataframe['ema_8'] > dataframe['ema_21']) &  # Short term up
-                (dataframe['ema_21'] > dataframe['ema_50']) &  # Medium term up
-                (dataframe['trend_strength'] > -2) &  # Not in severe downtrend
-                
-                # OVERSOLD CONDITIONS (buy the dip)
-                (dataframe['rsi'] < 40) &  # RSI oversold
-                (dataframe['rsi'] > 25) &  # But not extremely oversold
-                (dataframe['bb_percent'] < 0.3) &  # Near lower BB
-                
-                # MOMENTUM CONDITIONS (confirming reversal)
-                (dataframe['macd_hist'] > dataframe['macd_hist'].shift(1)) &  # MACD improving
-                (dataframe['close'] > dataframe['support'] * 1.005) &  # Above support
-                
-                # VOLUME CONDITIONS (institutional interest)
-                (dataframe['volume_ratio'] > 0.8) &  # Decent volume
-                (dataframe['volume_ratio'] < 3.0) &  # Not panic selling
-                
-                # PRICE ACTION CONDITIONS
-                (dataframe['close'] > dataframe['open']) |  # Green candle OR
-                (dataframe['close'] > dataframe['close'].shift(1))  # Higher close
+                # BUY THE DIP CONDITIONS
+                (
+                    (dataframe['rsi'] < 45) &  # RSI oversold/neutral
+                    (dataframe['close'] <= dataframe['low_5'] * 1.02) &  # Near recent low
+                    (dataframe['volume'] > dataframe['volume_avg'] * 0.5)  # Some volume
+                ) |
+                # TREND FOLLOWING CONDITIONS  
+                (
+                    (dataframe['ema_9'] > dataframe['ema_21']) &  # Short uptrend
+                    (dataframe['rsi'] > 35) & (dataframe['rsi'] < 65) &  # Not extreme
+                    (dataframe['close'] > dataframe['close'].shift(1))  # Price rising
+                ) |
+                # MOMENTUM BREAKOUT CONDITIONS
+                (
+                    (dataframe['price_change'] > 2) &  # Strong 5-candle momentum
+                    (dataframe['rsi'] < 70) &  # Not overbought
+                    (dataframe['volume'] > dataframe['volume_avg'] * 1.2)  # Volume surge
+                )
             ),
             'enter_long'] = 1
         
@@ -101,26 +82,20 @@ class SimplePortfolio(IStrategy):
     
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
-        TAKE PROFITS - don't be greedy
+        HOLD FOR PROFITS - only exit on clear weakness
         """
         dataframe.loc[
             (
-                # OVERBOUGHT CONDITIONS
-                (dataframe['rsi'] > 70) &  # RSI overbought
-                (dataframe['bb_percent'] > 0.8) &  # Near upper BB
-                
-                # MOMENTUM WEAKENING
-                (dataframe['macd_hist'] < dataframe['macd_hist'].shift(1)) &  # MACD weakening
-                (dataframe['close'] < dataframe['resistance'] * 0.995) &  # Below resistance
-                
-                # PROFIT TAKING
-                (dataframe['close'] > dataframe['ema_8'] * 1.03)  # 3% above EMA
+                # OVERBOUGHT AND WEAKENING
+                (dataframe['rsi'] > 75) &  # Very overbought
+                (dataframe['ema_9'] < dataframe['ema_9'].shift(1)) &  # EMA turning down
+                (dataframe['close'] < dataframe['close'].shift(2))  # Price weakening
             ) |
             (
-                # TREND REVERSAL
-                (dataframe['ema_8'] < dataframe['ema_21']) &  # Short term trend broken
-                (dataframe['rsi'] < 50) &  # RSI below midline
-                (dataframe['macd'] < dataframe['macd_signal'])  # MACD bearish
+                # CLEAR TREND REVERSAL
+                (dataframe['ema_9'] < dataframe['ema_21']) &  # Trend broken
+                (dataframe['rsi'] < 45) &  # Momentum weak
+                (dataframe['price_change'] < -3)  # Strong down move
             ),
             'exit_long'] = 1
         
@@ -129,27 +104,30 @@ class SimplePortfolio(IStrategy):
     def adjust_trade_position(self, trade, current_time, current_rate, current_profit, 
                             min_stake, max_stake, **kwargs):
         """
-        WORKING DCA logic - actually add to losing positions
+        AGGRESSIVE DCA - double down on losers
         """
-        if current_profit >= 0:
-            return None  # Don't add to winning positions
+        if current_profit >= -0.01:  # Only add when down 1%+
+            return None  
         
-        # Calculate additional stake based on loss severity
-        if current_profit < -0.06:  # Down 6%+
-            additional_stake = min_stake * 1.5  # Larger add
-            logger.info(f"🔥 HEAVY DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
-        elif current_profit < -0.04:  # Down 4-6%
+        # Calculate how much to add based on loss
+        if current_profit < -0.08:  # Down 8%+
+            additional_stake = min_stake * 2.0  # Big add
+            logger.info(f"🔥 HEAVY BUY: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+        elif current_profit < -0.05:  # Down 5-8%
+            additional_stake = min_stake * 1.5  # Medium add
+            logger.info(f"💪 STRONG BUY: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+        elif current_profit < -0.03:  # Down 3-5%
             additional_stake = min_stake * 1.0  # Normal add
-            logger.info(f"📈 DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
-        elif current_profit < -0.02:  # Down 2-4%
-            additional_stake = min_stake * 0.7  # Small add
-            logger.info(f"💰 Small DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+            logger.info(f"📈 BUY DIP: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+        elif current_profit < -0.01:  # Down 1-3%
+            additional_stake = min_stake * 0.8  # Small add
+            logger.info(f"💰 Small add: ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
         else:
-            return None  # Don't add yet
+            return None
         
-        # Ensure we have enough adjustments left
+        # Check if we can still add more positions
         if trade.nr_of_successful_entries >= (self.max_entry_position_adjustment + 1):
-            logger.info(f"⚠️ Max entries reached for {trade.pair}")
+            logger.info(f"⚠️ Max positions reached for {trade.pair}")
             return None
         
         return min(additional_stake, max_stake)
@@ -158,23 +136,23 @@ class SimplePortfolio(IStrategy):
                           proposed_stake: float, min_stake: float, max_stake: float,
                           entry_tag: str, **kwargs) -> float:
         """
-        Smart position sizing based on market conditions
+        SMALLER initial stakes to leave room for averaging
         """
-        # Use 80% of configured stake for initial entries
-        initial_stake = proposed_stake * 0.8
+        # Use 60% of proposed stake for initial entry (leave room for DCA)
+        initial_stake = proposed_stake * 0.6
         
-        logger.info(f"💰 Initial stake for {pair}: ${initial_stake:.2f}")
+        logger.info(f"💰 Initial stake for {pair}: ${initial_stake:.2f} (60% of max)")
         
         return max(initial_stake, min_stake)
     
     def custom_exit_price(self, pair: str, trade, current_time, proposed_rate: float,
                          current_profit: float, **kwargs) -> float:
         """
-        Smart exit pricing - don't leave money on the table
+        Try to get better exit prices when profitable
         """
-        if current_profit > 0.05:  # If up 5%+, try to get better price
-            better_price = proposed_rate * 1.001  # 0.1% above market
-            logger.info(f"💎 Aiming for better exit price: ${better_price:.4f} vs ${proposed_rate:.4f}")
+        if current_profit > 0.08:  # If up 8%+, try for slightly better price
+            better_price = proposed_rate * 1.002  # 0.2% above market
+            logger.info(f"💎 Aiming higher: ${better_price:.4f} vs market ${proposed_rate:.4f}")
             return better_price
         
         return proposed_rate
@@ -182,31 +160,27 @@ class SimplePortfolio(IStrategy):
     def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float,
                           time_in_force: str, current_time, entry_tag, **kwargs) -> bool:
         """
-        Final entry confirmation with detailed logging
+        Log all entries for tracking
         """
         trade_value = amount * rate
-        logger.info(f"🎯 ENTRY CONFIRMED: {pair}")
-        logger.info(f"   Amount: {amount:.4f} @ ${rate:.4f} = ${trade_value:.2f}")
-        logger.info(f"   Time: {current_time}")
-        logger.info(f"   Type: {order_type}")
-        
+        logger.info(f"🎯 BUY: {pair} | {amount:.4f} @ ${rate:.4f} = ${trade_value:.2f}")
         return True
     
     def confirm_trade_exit(self, pair: str, trade, order_type: str, amount: float, 
                           rate: float, time_in_force: str, exit_reason: str, 
                           current_time, **kwargs) -> bool:
         """
-        Exit confirmation with profit tracking
+        Log all exits with profit tracking
         """
-        trade_value = amount * rate
         profit_pct = trade.calc_profit_ratio(rate) * 100
         profit_usd = trade.calc_profit(rate)
         
-        logger.info(f"🚪 EXIT CONFIRMED: {pair}")
-        logger.info(f"   Amount: {amount:.4f} @ ${rate:.4f} = ${trade_value:.2f}")
-        logger.info(f"   Profit: {profit_pct:.2f}% (${profit_usd:.2f})")
-        logger.info(f"   Reason: {exit_reason}")
-        logger.info(f"   Duration: {current_time - trade.open_date}")
+        if profit_pct > 0:
+            logger.info(f"🚀 PROFIT: {pair} | {amount:.4f} @ ${rate:.4f} | +{profit_pct:.2f}% (+${profit_usd:.2f})")
+        else:
+            logger.info(f"🛑 LOSS: {pair} | {amount:.4f} @ ${rate:.4f} | {profit_pct:.2f}% (${profit_usd:.2f})")
+        
+        logger.info(f"   Duration: {current_time - trade.open_date} | Reason: {exit_reason}")
         
         return True
     
@@ -214,6 +188,6 @@ class SimplePortfolio(IStrategy):
                 proposed_leverage: float, max_leverage: float, entry_tag: str, 
                 side: str, **kwargs) -> float:
         """
-        No leverage - spot trading only
+        Spot trading only
         """
         return 1.0
