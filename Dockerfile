@@ -2,20 +2,30 @@ FROM freqtradeorg/freqtrade:stable
 
 WORKDIR /freqtrade
 
-# Copy files to current directory (not user_data)
+# Copy configuration and strategy files
 COPY config_template.json ./
 COPY SimplePortfolio.py ./
 COPY start.py ./
 
-# Fix permissions
+# Install additional dependencies if needed
 USER root
-RUN chmod +x start.py
-RUN mkdir -p user_data/strategies user_data/logs user_data/data
-RUN chown -R ftuser:ftuser .
 
-# Switch back to ftuser
+# Create directory structure and set permissions
+RUN mkdir -p user_data/strategies user_data/logs user_data/data && \
+    chmod +x start.py && \
+    chown -R ftuser:ftuser .
+
+# Switch back to ftuser for security
 USER ftuser
 
-# Start actual FreqTrade bot (NOT web server)
+# Healthcheck to ensure bot is running
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD freqtrade show-config --config user_data/config.json || exit 1
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV FREQTRADE_USERDIR=/freqtrade/user_data
+
+# Start the enhanced bot
 ENTRYPOINT []
 CMD ["python", "start.py"]
