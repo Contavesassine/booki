@@ -3,6 +3,8 @@ builder = "dockerfile"
 
 [deploy]
 startCommand = "python start.py"
-healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "always"
+
+# Remove web health check since we're running a trading bot
+# The Docker healthcheck will monitor FreqTrade instead
