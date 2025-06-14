@@ -25,6 +25,86 @@ def setup_logging():
     logger = logging.getLogger(__name__)
     return logger
 
+def get_config_template():
+    """Return the config template as a dict - no file needed"""
+    return {
+        "$schema": "https://schema.freqtrade.io/schema.json",
+        "max_open_trades": 4,
+        "stake_currency": "USD",
+        "stake_amount": 5,
+        "tradable_balance_ratio": 0.90,
+        "fiat_display_currency": "USD",
+        "dry_run": False,
+        "cancel_open_orders_on_exit": True,
+        "trading_mode": "spot",
+        "unfilledtimeout": {
+            "entry": 15,
+            "exit": 15,
+            "exit_timeout_count": 3,
+            "unit": "minutes"
+        },
+        "entry_pricing": {
+            "price_side": "other",
+            "use_order_book": True,
+            "order_book_top": 1,
+            "price_last_balance": 0.0,
+            "check_depth_of_market": {
+                "enabled": False,
+                "bids_to_ask_delta": 1
+            }
+        },
+        "exit_pricing": {
+            "price_side": "other",
+            "use_order_book": True,
+            "order_book_top": 1
+        },
+        "exchange": {
+            "name": "kraken",
+            "key": "",
+            "secret": "",
+            "ccxt_config": {
+                "enableRateLimit": True,
+                "rateLimit": 2000,
+                "sandbox": False
+            },
+            "pair_whitelist": [
+                "ONDO/USD",
+                "CPOOL/USD"
+            ],
+            "pair_blacklist": []
+        },
+        "pairlists": [
+            {
+                "method": "StaticPairList"
+            }
+        ],
+        "telegram": {
+            "enabled": False,
+            "token": "",
+            "chat_id": ""
+        },
+        "api_server": {
+            "enabled": True,
+            "listen_ip_address": "127.0.0.1",
+            "listen_port": 8080,
+            "username": "freqtrader",
+            "password": "freqtrader123",
+            "jwt_secret_key": "supersecretkey123",
+            "CORS_origins": [],
+            "verbosity": "info"
+        },
+        "bot_name": "SmartPortfolioBot",
+        "initial_state": "running",
+        "force_entry_enable": False,
+        "internals": {
+            "process_throttle_secs": 5
+        },
+        "dataformat_ohlcv": "json",
+        "dataformat_trades": "jsongz",
+        "position_adjustment_enable": True,
+        "max_entry_position_adjustment": 3
+    }
+
 def main():
     logger = setup_logging()
     
@@ -47,10 +127,9 @@ def main():
     
     logger.info(f"✅ API keys loaded: {api_key[:8]}...")
     
-    # Load and update config
+    # Load config from embedded template - NO FILE READING
     try:
-        with open('config_template.json', 'r') as f:
-            config = json.load(f)
+        config = get_config_template()
         
         config['exchange']['key'] = api_key
         config['exchange']['secret'] = secret_key
@@ -64,12 +143,16 @@ def main():
         with open('user_data/config.json', 'w') as f:
             json.dump(config, f, indent=2)
         
-        logger.info("✅ Configuration created")
+        logger.info("✅ Configuration created from embedded template")
         
         # Copy strategy
         import shutil
-        shutil.copy('SimplePortfolio.py', 'user_data/strategies/')
-        logger.info("✅ Strategy copied to user_data/strategies/")
+        if os.path.exists('SimplePortfolio.py'):
+            shutil.copy('SimplePortfolio.py', 'user_data/strategies/')
+            logger.info("✅ Strategy copied to user_data/strategies/")
+        else:
+            logger.error("❌ SimplePortfolio.py not found!")
+            sys.exit(1)
         
         # Log strategy configuration
         logger.info("📊 Strategy Configuration:")
@@ -96,14 +179,10 @@ def main():
             '--verbosity', '3'
         ])
         
-    except FileNotFoundError as e:
-        logger.error(f"❌ Configuration file not found: {e}")
-        sys.exit(1)
-    except json.JSONDecodeError as e:
-        logger.error(f"❌ Invalid JSON in config: {e}")
-        sys.exit(1)
     except Exception as e:
         logger.error(f"❌ Startup error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         sys.exit(1)
 
 if __name__ == "__main__":
