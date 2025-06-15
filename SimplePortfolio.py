@@ -53,17 +53,13 @@ class SimplePortfolio(IStrategy):
     
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
-        MUCH MORE SELECTIVE buying - only on big dips
+        FORCE new entries to create trackable trades for DCA
         """
         dataframe.loc[
             (
-                # ONLY BUY MAJOR DIPS - be very selective
-                (
-                    (dataframe['rsi'] < 30) &  # Very oversold (was 45)
-                    (dataframe['close'] <= dataframe['low_5'] * 1.005) &  # Very near recent low
-                    (dataframe['volume'] > dataframe['volume_avg'] * 1.2) &  # Volume surge
-                    (dataframe['price_change'] < -3)  # Big price drop
-                )
+                # FORCE ENTRY - buy small amounts to start tracking
+                (dataframe['rsi'] < 50) &  # Not too overbought
+                (dataframe['volume'] > dataframe['volume_avg'] * 0.5)  # Any volume
             ),
             'enter_long'] = 1
         
@@ -93,7 +89,12 @@ class SimplePortfolio(IStrategy):
         """
         AGGRESSIVE DCA - this is where DCA bots make their money
         """
-        if current_profit >= -0.01:  # Only add when down 3%+ (was 1%)
+        # DEBUG: Log what FreqTrade thinks about this trade
+        logger.info(f"🔍 DCA CHECK: {trade.pair} | Profit: {current_profit:.2%} | Entries: {trade.nr_of_successful_entries}")
+        logger.info(f"🔍 Trade Info: Amount: {trade.amount} | Open Rate: ${trade.open_rate:.4f} | Current: ${current_rate:.4f}")
+        
+        if current_profit >= -0.03:  # Only add when down 3%+ (was 1%)
+            logger.info(f"❌ No DCA: {trade.pair} not down enough ({current_profit:.2%} vs -3% needed)")
             return None  
         
         # BIGGER DCA amounts - go heavy when losing
@@ -123,12 +124,12 @@ class SimplePortfolio(IStrategy):
                           proposed_stake: float, min_stake: float, max_stake: float,
                           entry_tag: str, **kwargs) -> float:
         """
-        MUCH SMALLER initial stakes - save money for DCA
+        TINY initial stakes - just to start tracking for DCA
         """
-        # Use only 25% for initial entry (was 60%) - save 75% for DCA
-        initial_stake = proposed_stake * 0.25
+        # Use only 10% for initial entry - tiny tracking position
+        initial_stake = proposed_stake * 0.10
         
-        logger.info(f"💰 Small initial stake for {pair}: ${initial_stake:.2f} (25% - saving for DCA)")
+        logger.info(f"💰 Tiny tracking stake for {pair}: ${initial_stake:.2f} (10% - saving for DCA)")
         
         return max(initial_stake, min_stake)
     
