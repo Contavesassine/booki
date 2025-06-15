@@ -5,6 +5,7 @@ builder = "dockerfile"
 startCommand = "python start.py"
 healthcheckTimeout = 300
 restartPolicyType = "always"
+volumes = ["user_data:/freqtrade/user_data"]
 
 # Remove web health check since we're running a trading bot
 # The Docker healthcheck will monitor FreqTrade instead
