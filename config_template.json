@@ -73,5 +73,5 @@
     "dataformat_ohlcv": "json",
     "dataformat_trades": "jsongz",
     "position_adjustment_enable": true,
-    "max_entry_position_adjustment": 3
+    "max_entry_position_adjustment": 6
 }
