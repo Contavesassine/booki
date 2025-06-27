@@ -25,7 +25,7 @@ class SimplePortfolio(IStrategy):
     can_short = False
     
     position_adjustment_enable = True
-    max_entry_position_adjustment = 4
+    max_entry_position_adjustment = 8
     
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """Basic indicators"""
