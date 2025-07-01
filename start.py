@@ -203,14 +203,20 @@ def main():
         # Small delay to ensure logs are written
         time.sleep(2)
         
-        # FIXED COMMAND - force refresh cached data to fix stuck candles
+        # Clear cached data before starting to fix stuck candles
+        cache_dir = 'user_data/data'
+        if os.path.exists(cache_dir):
+            logger.info("🧹 Clearing cached data to fix stuck candles...")
+            shutil.rmtree(cache_dir)
+            os.makedirs(cache_dir, exist_ok=True)
+        
+        # FIXED COMMAND - removed invalid argument
         cmd = [
             'freqtrade', 'trade',
             '--config', 'user_data/config.json',
             '--strategy', 'SimplePortfolio',
             '--userdir', 'user_data',
             '--logfile', 'user_data/logs/freqtrade.log',
-            '--refresh-pairs-cached', '1',  # Force refresh to fix stuck 11:20 candle
             '-vvv'
         ]
         
