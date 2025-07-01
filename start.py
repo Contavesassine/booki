@@ -65,8 +65,12 @@ def get_config_template():
             "secret": "",
             "ccxt_config": {
                 "enableRateLimit": True,
-                "rateLimit": 2000,
-                "sandbox": False
+                "rateLimit": 1000,
+                "sandbox": False,
+                "timeout": 30000,
+                "options": {
+                    "fetchOHLCVLimit": 720
+                }
             },
             "pair_whitelist": [
                 "ONDO/USD",
@@ -103,7 +107,7 @@ def get_config_template():
         "dataformat_ohlcv": "json",
         "dataformat_trades": "jsongz",
         "position_adjustment_enable": True,
-        "max_entry_position_adjustment": 3
+        "max_entry_position_adjustment": 12
     }
 
 def find_freqtrade_path():
@@ -199,14 +203,15 @@ def main():
         # Small delay to ensure logs are written
         time.sleep(2)
         
-        # FIXED COMMAND - removed invalid --verbosity argument
+        # FIXED COMMAND - force refresh cached data to fix stuck candles
         cmd = [
             'freqtrade', 'trade',
             '--config', 'user_data/config.json',
             '--strategy', 'SimplePortfolio',
             '--userdir', 'user_data',
             '--logfile', 'user_data/logs/freqtrade.log',
-            '-vvv'  # Use valid verbose flag instead of --verbosity 3
+            '--refresh-pairs-cached', '1',  # Force refresh to fix stuck 11:20 candle
+            '-vvv'
         ]
         
         logger.info(f"🎯 Executing command: {' '.join(cmd)}")
