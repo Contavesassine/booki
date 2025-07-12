@@ -40,7 +40,15 @@
         },
         "pair_whitelist": [
             "ONDO/USD",
-            "CPOOL/USD"
+            "CPOOL/USD",
+            "BTC/USD",
+            "ETH/USD",
+            "SOL/USD",
+            "ADA/USD",
+            "AVAX/USD",
+            "TAO/USD",
+            "NEAR/USD",
+            "AIOZ/USD"
         ],
         "pair_blacklist": []
     },
