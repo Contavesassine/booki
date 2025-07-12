@@ -30,7 +30,7 @@ def get_config_template():
     """Return the config template as a dict - UPDATED WITH ALL 9 PAIRS"""
     return {
         "$schema": "https://schema.freqtrade.io/schema.json",
-        "max_open_trades": 10,
+        "max_open_trades": 20,
         "stake_currency": "USD",
         "stake_amount": 5,
         "tradable_balance_ratio": 0.90,
