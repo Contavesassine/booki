@@ -27,10 +27,10 @@ def setup_logging():
     return logger
 
 def get_config_template():
-    """Return the config template as a dict - no file needed"""
+    """Return the config template as a dict - UPDATED WITH ALL 9 PAIRS"""
     return {
         "$schema": "https://schema.freqtrade.io/schema.json",
-        "max_open_trades": 4,
+        "max_open_trades": 10,
         "stake_currency": "USD",
         "stake_amount": 5,
         "tradable_balance_ratio": 0.90,
@@ -74,7 +74,14 @@ def get_config_template():
             },
             "pair_whitelist": [
                 "ONDO/USD",
-                "CPOOL/USD"
+                "CPOOL/USD",
+                "BTC/USD",
+                "ETH/USD",
+                "SOL/USD",
+                "ADA/USD",
+                "AVAX/USD",
+                "TAO/USD",
+                "NEAR/USD"
             ],
             "pair_blacklist": []
         },
@@ -136,12 +143,13 @@ def main():
     logger = setup_logging()
     
     logger.info("🚀 Starting Smart Portfolio Bot...")
-    logger.info("💡 Fixed Strategy Features:")
+    logger.info("💡 Updated Strategy Features:")
     logger.info("   - Fast 2-8% profit targets (DCA style)")
     logger.info("   - Selective entry signals")
     logger.info("   - Heavy DCA when losing")
     logger.info("   - Small initial stakes")
     logger.info("   - 5-minute timeframe")
+    logger.info("   - NOW TRADING 9 PAIRS!")
     
     # Get API keys
     api_key = os.getenv('KRAKEN_API_KEY')
@@ -162,7 +170,7 @@ def main():
     
     logger.info(f"✅ Found freqtrade at: {freqtrade_path}")
     
-    # Load config from embedded template - NO FILE READING
+    # Load config from embedded template - NOW WITH ALL 9 PAIRS
     try:
         config = get_config_template()
         
@@ -199,6 +207,7 @@ def main():
         logger.info("🚀 Starting FreqTrade bot...")
         logger.info("📈 Bot will now trade with profit-focused DCA strategy")
         logger.info("⚠️  Monitor logs for entry/exit signals and DCA actions")
+        logger.info("🎯 NOW SCANNING ALL 9 PAIRS FOR OPPORTUNITIES!")
         
         # Small delay to ensure logs are written
         time.sleep(2)
