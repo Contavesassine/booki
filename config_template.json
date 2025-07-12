@@ -47,8 +47,7 @@
             "ADA/USD",
             "AVAX/USD",
             "TAO/USD",
-            "NEAR/USD",
-            "AIOZ/USD"
+            "NEAR/USD"
         ],
         "pair_blacklist": []
     },
