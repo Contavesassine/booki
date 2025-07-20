@@ -81,7 +81,9 @@ def get_config_template():
                 "ADA/USD",
                 "AVAX/USD",
                 "TAO/USD",
-                "NEAR/USD"
+                "NEAR/USD",
+                "RLUSD/USD",
+                "XLM/USD"
             ],
             "pair_blacklist": []
         },
