@@ -43,17 +43,8 @@
             }
         },
         "pair_whitelist": [
-            "ONDO/USD",
-            "CPOOL/USD",
             "BTC/USD",
             "ETH/USD",
-            "SOL/USD",
-            "ADA/USD",
-            "AVAX/USD",
-            "TAO/USD",
-            "NEAR/USD",
-            "RLUSD/USD",
-            "XLM/USD"
         ],
         "pair_blacklist": []
     },
