@@ -40,18 +40,18 @@ class SimplePortfolio(IStrategy):
     
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
-        NUCLEAR OPTION - ALWAYS BUY TO TEST DCA SYSTEM
+        Set entry signal on LATEST candle only - FreqTrade only checks the last row
         """
         pair = metadata['pair']
+        
+        # Initialize entire column to 0
+        dataframe['enter_long'] = 0
+        
+        # Set signal ONLY on the last row (most recent candle)
+        dataframe.loc[dataframe.index[-1], 'enter_long'] = 1
+        
         current_price = dataframe['close'].iloc[-1]
-        rsi_current = dataframe['rsi'].iloc[-1]
-        
-        # Log entry checks
-        logger.info(f"ENTRY CHECK: {pair} @ ${current_price:.4f} | RSI: {rsi_current:.1f}")
-        logger.info(f"ALWAYS BUYING: Setting enter_long=1 for {pair}")
-        
-        # ALWAYS BUY - NO CONDITIONS
-        dataframe.loc[:, 'enter_long'] = 1
+        logger.info(f"ENTRY SIGNAL: {pair} @ ${current_price:.4f} - Signal set on latest candle")
         
         return dataframe
     
@@ -105,7 +105,7 @@ class SimplePortfolio(IStrategy):
     def custom_stake_amount(self, pair: str, current_time, current_rate: float,
                           proposed_stake: float, min_stake: float, max_stake: float,
                           entry_tag: str, **kwargs) -> float:
-        """Use full stake amount - FIXED"""
+        """Use full stake amount"""
         logger.info(f"STAKE: {pair} using full ${proposed_stake:.2f}")
         return proposed_stake
     
@@ -122,7 +122,7 @@ class SimplePortfolio(IStrategy):
                           time_in_force: str, current_time, entry_tag, **kwargs) -> bool:
         """Log entries"""
         trade_value = amount * rate
-        logger.info(f"BUY: {pair} | {amount:.4f} @ ${rate:.4f} = ${trade_value:.2f}")
+        logger.info(f"BUY CONFIRMED: {pair} | {amount:.4f} @ ${rate:.4f} = ${trade_value:.2f}")
         return True
     
     def confirm_trade_exit(self, pair: str, trade, order_type: str, amount: float, 
