@@ -45,6 +45,9 @@
         "pair_whitelist": [
             "BTC/USD",
             "ETH/USD",
+            "SOL/USD",
+            "TAO/USD",
+            "ONDO/USD",
         ],
         "pair_blacklist": []
     },
