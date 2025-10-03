@@ -40,18 +40,17 @@ class SimplePortfolio(IStrategy):
     
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """
-        🚨 NUCLEAR OPTION - ALWAYS BUY TO TEST DCA SYSTEM
+        NUCLEAR OPTION - ALWAYS BUY TO TEST DCA SYSTEM
         """
         pair = metadata['pair']
         current_price = dataframe['close'].iloc[-1]
         rsi_current = dataframe['rsi'].iloc[-1]
         
-        # 🚨 IMPOSSIBLE TO MISS LOG MESSAGES
-        logger.info(f"🚨🚨🚨 NUCLEAR ENTRY CHECK: {pair} @ ${current_price:.4f} | RSI: {rsi_current:.1f}")
-        logger.info(f"🚨🚨🚨 ALWAYS BUYING: Setting enter_long=1 for {pair}")
-        logger.info(f"🚨🚨🚨 THIS MESSAGE PROVES STRATEGY UPDATE WORKED!")
+        # Log entry checks
+        logger.info(f"ENTRY CHECK: {pair} @ ${current_price:.4f} | RSI: {rsi_current:.1f}")
+        logger.info(f"ALWAYS BUYING: Setting enter_long=1 for {pair}")
         
-        # ALWAYS BUY - NO CONDITIONS WHATSOEVER
+        # ALWAYS BUY - NO CONDITIONS
         dataframe.loc[:, 'enter_long'] = 1
         
         return dataframe
@@ -74,34 +73,31 @@ class SimplePortfolio(IStrategy):
     def adjust_trade_position(self, trade, current_time, current_rate, current_profit, 
                             min_stake, max_stake, **kwargs):
         """
-        🚨 NUCLEAR DCA - WITH IMPOSSIBLE TO MISS LOGGING
+        DCA - Dollar Cost Averaging on losing positions
         """
-        # 🚨 SUPER OBVIOUS DEBUG LOGS
-        logger.info(f"🚨🚨🚨 DCA CHECK: {trade.pair} | Profit: {current_profit:.2%} | Entries: {trade.nr_of_successful_entries}")
-        logger.info(f"🚨🚨🚨 Trade Details: Amount: {trade.amount} | Open: ${trade.open_rate:.4f} | Current: ${current_rate:.4f}")
+        logger.info(f"DCA CHECK: {trade.pair} | Profit: {current_profit:.2%} | Entries: {trade.nr_of_successful_entries}")
         
         if current_profit >= -0.01:  # DCA when down 1%+
-            logger.info(f"🚨🚨🚨 No DCA: {trade.pair} not down enough ({current_profit:.2%} vs -1% threshold)")
             return None
         
-        # DCA amounts
+        # DCA amounts based on loss severity
         if current_profit < -0.15:
             additional_stake = min_stake * 3.0
-            logger.info(f"🚨🚨🚨 MASSIVE DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+            logger.info(f"MASSIVE DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
         elif current_profit < -0.10:
             additional_stake = min_stake * 2.5
-            logger.info(f"🚨🚨🚨 BIG DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+            logger.info(f"BIG DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
         elif current_profit < -0.06:
             additional_stake = min_stake * 2.0
-            logger.info(f"🚨🚨🚨 MEDIUM DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+            logger.info(f"MEDIUM DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
         elif current_profit < -0.01:
             additional_stake = min_stake * 1.0
-            logger.info(f"🚨🚨🚨 SMALL DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
+            logger.info(f"SMALL DCA: Adding ${additional_stake:.2f} to {trade.pair} (down {current_profit:.1%})")
         else:
             return None
         
         if trade.nr_of_successful_entries >= (self.max_entry_position_adjustment + 1):
-            logger.info(f"🚨🚨🚨 Max DCA entries reached for {trade.pair}")
+            logger.info(f"Max DCA entries reached for {trade.pair}")
             return None
         
         return min(additional_stake, max_stake)
@@ -109,18 +105,15 @@ class SimplePortfolio(IStrategy):
     def custom_stake_amount(self, pair: str, current_time, current_rate: float,
                           proposed_stake: float, min_stake: float, max_stake: float,
                           entry_tag: str, **kwargs) -> float:
-        """TINY stakes for testing"""
-        initial_stake = proposed_stake * 0.05  # 5% only
-        
-        logger.info(f"🚨🚨🚨 TINY stake for {pair}: ${initial_stake:.2f} (5% - saving 95% for DCA)")
-        
-        return max(initial_stake, min_stake)
+        """Use full stake amount - FIXED"""
+        logger.info(f"STAKE: {pair} using full ${proposed_stake:.2f}")
+        return proposed_stake
     
     def custom_exit_price(self, pair: str, trade, current_time, proposed_rate: float,
                          current_profit: float, **kwargs) -> float:
         """Sell when profitable"""
         if current_profit > 0.02:
-            logger.info(f"🚨🚨🚨 TAKING PROFIT: {pair} up {current_profit:.1%} - selling at market")
+            logger.info(f"TAKING PROFIT: {pair} up {current_profit:.1%} - selling at market")
             return proposed_rate
         
         return proposed_rate
@@ -129,7 +122,7 @@ class SimplePortfolio(IStrategy):
                           time_in_force: str, current_time, entry_tag, **kwargs) -> bool:
         """Log entries"""
         trade_value = amount * rate
-        logger.info(f"🚨🚨🚨 NUCLEAR BUY: {pair} | {amount:.4f} @ ${rate:.4f} = ${trade_value:.2f}")
+        logger.info(f"BUY: {pair} | {amount:.4f} @ ${rate:.4f} = ${trade_value:.2f}")
         return True
     
     def confirm_trade_exit(self, pair: str, trade, order_type: str, amount: float, 
@@ -140,9 +133,9 @@ class SimplePortfolio(IStrategy):
         profit_usd = trade.calc_profit(rate)
         
         if profit_pct > 0:
-            logger.info(f"🚨🚨🚨 NUCLEAR PROFIT: {pair} | SOLD {amount:.4f} @ ${rate:.4f} | +{profit_pct:.2f}% (+${profit_usd:.2f})")
+            logger.info(f"PROFIT: {pair} | SOLD {amount:.4f} @ ${rate:.4f} | +{profit_pct:.2f}% (+${profit_usd:.2f})")
         else:
-            logger.info(f"🚨🚨🚨 NUCLEAR LOSS: {pair} | SOLD {amount:.4f} @ ${rate:.4f} | {profit_pct:.2f}% (${profit_usd:.2f})")
+            logger.info(f"LOSS: {pair} | SOLD {amount:.4f} @ ${rate:.4f} | {profit_pct:.2f}% (${profit_usd:.2f})")
         
         return True
     
