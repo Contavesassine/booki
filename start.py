@@ -27,12 +27,12 @@ def setup_logging():
     return logger
 
 def get_config_template():
-    """Return the config template as a dict - UPDATED WITH ALL 9 PAIRS"""
+    """Return the config template as a dict - UPDATED WITH LOWER STAKES"""
     return {
         "$schema": "https://schema.freqtrade.io/schema.json",
-        "max_open_trades": 20,
+        "max_open_trades": 5,
         "stake_currency": "USD",
-        "stake_amount": 5,
+        "stake_amount": 2,
         "tradable_balance_ratio": 0.90,
         "fiat_display_currency": "USD",
         "dry_run": False,
@@ -144,35 +144,36 @@ def find_freqtrade_path():
 def main():
     logger = setup_logging()
     
-    logger.info("🚀 Starting Smart Portfolio Bot...")
-    logger.info("💡 Updated Strategy Features:")
+    logger.info("Starting Smart Portfolio Bot...")
+    logger.info("Updated Strategy Features:")
     logger.info("   - Fast 2-8% profit targets (DCA style)")
     logger.info("   - Selective entry signals")
     logger.info("   - Heavy DCA when losing")
-    logger.info("   - Small initial stakes")
+    logger.info("   - Small initial stakes: $2 per trade")
+    logger.info("   - Max 5 simultaneous trades")
     logger.info("   - 5-minute timeframe")
-    logger.info("   - NOW TRADING 9 PAIRS!")
+    logger.info("   - NOW TRADING 11 PAIRS!")
     
     # Get API keys
     api_key = os.getenv('KRAKEN_API_KEY')
     secret_key = os.getenv('KRAKEN_SECRET_KEY')
     
     if not api_key or not secret_key:
-        logger.error("❌ Missing API keys!")
+        logger.error("Missing API keys!")
         logger.error("Set KRAKEN_API_KEY and KRAKEN_SECRET_KEY environment variables")
         sys.exit(1)
     
-    logger.info(f"✅ API keys loaded: {api_key[:8]}...")
+    logger.info(f"API keys loaded: {api_key[:8]}...")
     
     # Find freqtrade executable
     freqtrade_path = find_freqtrade_path()
     if not freqtrade_path:
-        logger.error("❌ Could not find freqtrade executable!")
+        logger.error("Could not find freqtrade executable!")
         sys.exit(1)
     
-    logger.info(f"✅ Found freqtrade at: {freqtrade_path}")
+    logger.info(f"Found freqtrade at: {freqtrade_path}")
     
-    # Load config from embedded template - NOW WITH ALL 9 PAIRS
+    # Load config from embedded template
     try:
         config = get_config_template()
         
@@ -188,28 +189,29 @@ def main():
         with open('user_data/config.json', 'w') as f:
             json.dump(config, f, indent=2)
         
-        logger.info("✅ Configuration created from embedded template")
+        logger.info("Configuration created from embedded template")
         
         # Copy strategy
         if os.path.exists('SimplePortfolio.py'):
             shutil.copy('SimplePortfolio.py', 'user_data/strategies/')
-            logger.info("✅ Strategy copied to user_data/strategies/")
+            logger.info("Strategy copied to user_data/strategies/")
         else:
-            logger.error("❌ SimplePortfolio.py not found!")
+            logger.error("SimplePortfolio.py not found!")
             sys.exit(1)
         
         # Log strategy configuration
-        logger.info("📊 Strategy Configuration:")
+        logger.info("Strategy Configuration:")
         logger.info(f"   - Max open trades: {config['max_open_trades']}")
         logger.info(f"   - Stake amount: ${config['stake_amount']}")
         logger.info(f"   - Tradable balance: {config['tradable_balance_ratio']*100}%")
         logger.info(f"   - Trading pairs: {', '.join(config['exchange']['pair_whitelist'])}")
         logger.info(f"   - Max DCA entries: {config['max_entry_position_adjustment']}")
+        logger.info(f"   - MINIMUM CAPITAL NEEDED: $10 USD")
         
-        logger.info("🚀 Starting FreqTrade bot...")
-        logger.info("📈 Bot will now trade with profit-focused DCA strategy")
-        logger.info("⚠️  Monitor logs for entry/exit signals and DCA actions")
-        logger.info("🎯 NOW SCANNING ALL 9 PAIRS FOR OPPORTUNITIES!")
+        logger.info("Starting FreqTrade bot...")
+        logger.info("Bot will now trade with profit-focused DCA strategy")
+        logger.info("Monitor logs for entry/exit signals and DCA actions")
+        logger.info("NOW SCANNING ALL 11 PAIRS FOR OPPORTUNITIES!")
         
         # Small delay to ensure logs are written
         time.sleep(2)
@@ -217,7 +219,7 @@ def main():
         # Clear cached data before starting to fix stuck candles
         cache_dir = 'user_data/data'
         if os.path.exists(cache_dir):
-            logger.info("🧹 Clearing cached data to fix stuck candles...")
+            logger.info("Clearing cached data to fix stuck candles...")
             shutil.rmtree(cache_dir)
             os.makedirs(cache_dir, exist_ok=True)
         
@@ -231,17 +233,17 @@ def main():
             '-vvv'
         ]
         
-        logger.info(f"🎯 Executing command: {' '.join(cmd)}")
+        logger.info(f"Executing command: {' '.join(cmd)}")
         
         # Use subprocess.run instead of os.execv for better error handling
         result = subprocess.run(cmd, check=False)
         
         if result.returncode != 0:
-            logger.error(f"❌ FreqTrade exited with code: {result.returncode}")
+            logger.error(f"FreqTrade exited with code: {result.returncode}")
             sys.exit(result.returncode)
         
     except Exception as e:
-        logger.error(f"❌ Startup error: {e}")
+        logger.error(f"Startup error: {e}")
         import traceback
         logger.error(traceback.format_exc())
         sys.exit(1)
