@@ -1,8 +1,8 @@
 {
     "$schema": "https://schema.freqtrade.io/schema.json",
-    "max_open_trades": 10,
+    "max_open_trades": 5,
     "stake_currency": "USD",
-    "stake_amount": 5,
+    "stake_amount": 2,
     "tradable_balance_ratio": 0.90,
     "fiat_display_currency": "USD",
     "dry_run": false,
@@ -35,8 +35,12 @@
         "secret": "",
         "ccxt_config": {
             "enableRateLimit": true,
-            "rateLimit": 2000,
-            "sandbox": false
+            "rateLimit": 1000,
+            "sandbox": false,
+            "timeout": 30000,
+            "options": {
+                "fetchOHLCVLimit": 720
+            }
         },
         "pair_whitelist": [
             "ONDO/USD",
